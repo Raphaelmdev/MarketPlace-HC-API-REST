@@ -1,0 +1,125 @@
+.identify-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--vinho-escuro);
+  padding: 20px;
+}
+
+.identify-card {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(245, 240, 232, 0.96);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 16px;
+  padding: 32px 28px;
+  color: #1f1712;
+}
+
+.identify-card h1 {
+  text-align: center;
+  margin: 0 0 20px;
+  font-family: "Cinzel", serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  color: var(--dourado);
+}
+
+.identify-card p {
+  max-width: 340px;
+  margin: 0 auto 24px;
+  text-align: center;
+  line-height: 1.45;
+  color: #6d5a49;
+}
+
+.identify-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.identify-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 14px;
+  border: 1px solid #d9c39f;
+  border-radius: 10px;
+  background: #fff;
+  transition: 0.2s;
+}
+
+.identify-input:hover,
+.identify-input:focus-within {
+  border-color: var(--dourado);
+}
+
+.identify-input svg {
+  color: var(--dourado);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.identify-input input {
+  flex: 1;
+  height: 58px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f1712;
+  font-size: 0.98rem;
+}
+
+.identify-card button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--dourado);
+  background: transparent;
+  color: #1f1712;
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.identify-card button:hover {
+  background: var(--dourado);
+}
+
+.identify-card button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.identify-error {
+  display: block;
+  text-align: center;
+  color: var(--erro);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.new-user-box {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.new-user-box h3 {
+  margin: 0 0 14px;
+  font-family: "Cinzel", serif;
+  color: var(--dourado);
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.new-user-box .auth-description {
+  max-width: 340px;
+  margin: 0 auto 24px;
+  color: #b8b8b8;
+  line-height: 1.45;
+}
