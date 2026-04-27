@@ -1,0 +1,43 @@
+# ======================
+# JAVA / SPRING
+# ======================
+/target/
+*.log
+*.class
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# ======================
+# IDEs
+# ======================
+.idea/
+.vscode/
+*.iml
+
+# ======================
+# OS
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# ENV
+# ======================
+.env
+.env.local
+
+# ======================
+# FRONT (React / Vite)
+# ======================
+node_modules/
+dist/
+build/
+
+# ======================
+# LOGS
+# ======================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
