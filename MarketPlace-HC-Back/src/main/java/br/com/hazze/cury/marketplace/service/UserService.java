@@ -1,8 +1,6 @@
 package br.com.hazze.cury.marketplace.service;
 
-import br.com.hazze.cury.marketplace.dto.request.UserAdminRequestDTO;
-import br.com.hazze.cury.marketplace.dto.request.UserClientRequestDTO;
-import br.com.hazze.cury.marketplace.dto.request.UserStatusUpdateDTO;
+import br.com.hazze.cury.marketplace.dto.request.*;
 import br.com.hazze.cury.marketplace.dto.response.UserResponseDTO;
 import br.com.hazze.cury.marketplace.entities.Role;
 import br.com.hazze.cury.marketplace.entities.User;
@@ -50,30 +48,36 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDTO update(Long id, UserClientRequestDTO dto) {
+    public UserResponseDTO updateProfile(Long id, UserClientUpdateDTO dto) {
         User user = findEntityById(id);
 
         if (!user.getEmail().equals(dto.email()) && userRepository.existsByEmail(dto.email())) {
             throw new BusinessException("Já existe um usuário com esse e-mail.");
         }
 
-        if (dto.cpf() != null && !dto.cpf().equals(user.getCpf()) && userRepository.existsByCpf(dto.cpf())) {
+        if (!user.getCpf().equals(dto.cpf()) && userRepository.existsByCpf(dto.cpf())) {
             throw new BusinessException("Já existe um usuário com esse CPF.");
         }
 
         user.setName(dto.name());
         user.setEmail(dto.email());
-        user.setPassword(passwordEncoder.encode(dto.password()));
         user.setPhone(dto.phone());
         user.setCpf(dto.cpf());
 
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponseDTO updateAddress(Long id, UserAddressUpdateDTO dto) {
+        User user = findEntityById(id);
+
         user.setCep(dto.cep());
         user.setStreet(dto.street());
+        user.setNumber(dto.number());
+        user.setComplement(dto.complement());
         user.setNeighborhood(dto.neighborhood());
         user.setCity(dto.city());
         user.setState(dto.state());
-        user.setNumber(dto.number());
-        user.setComplement(dto.complement());
 
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -100,16 +104,6 @@ public class UserService {
     private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new BusinessException("Já existe um usuário com esse e-mail.");
-        }
-    }
-
-    private void validateEmailAndCpf(String email, String cpf) {
-        if (userRepository.existsByEmail(email)) {
-            throw new BusinessException("Já existe um usuário com esse e-mail.");
-        }
-
-        if (cpf != null && userRepository.existsByCpf(cpf)) {
-            throw new BusinessException("Já existe um usuário com esse CPF.");
         }
     }
 

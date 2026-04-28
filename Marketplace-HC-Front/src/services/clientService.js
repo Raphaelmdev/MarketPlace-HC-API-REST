@@ -65,6 +65,16 @@ export async function updateMyProfile(data) {
   return handleResponse(response);
 }
 
+export async function updateMyAddress(data) {
+  const response = await fetch(`${API_URL}/users/me/address`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
+}
+
 /* ==============================
    CART
 ================================= */
@@ -169,3 +179,5 @@ export async function cancelMyOrder(orderId) {
 
   return handleResponse(response);
 }
+
+
