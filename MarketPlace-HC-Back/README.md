@@ -1,4 +1,4 @@
-# Marketplace API - HazzeCury
+# Marketplace HazzeCury API - Back End
 
 ![Java](https://img.shields.io/badge/Java-17+-red)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
