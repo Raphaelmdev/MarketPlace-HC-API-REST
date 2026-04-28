@@ -12,7 +12,6 @@ export function ClientAccount() {
       <StoreHeader />
 
       <main className="client-page">
-        {/* HERO */}
         <section className="client-hero">
           <div className="client-hero-inner">
             <h1>Sua Conta</h1>
@@ -20,23 +19,8 @@ export function ClientAccount() {
           </div>
         </section>
 
-        {/* CONTEÚDO */}
         <section className="account-container">
           <div className="account-cards">
-            <button
-              className="account-card"
-              onClick={() => navigate("/client/orders")}
-            >
-              <div className="account-card-icon">
-                <MdReceiptLong />
-              </div>
-
-              <div>
-                <h3>Seus pedidos</h3>
-                <p>Rastrear, consultar ou cancelar pedidos realizados.</p>
-              </div>
-            </button>
-
             <button
               className="account-card"
               onClick={() => navigate("/client/profile")}
@@ -47,7 +31,7 @@ export function ClientAccount() {
 
               <div>
                 <h3>Seu perfil</h3>
-                <p>Visualizar seus dados pessoais e informações da conta.</p>
+                <p>Visualizar e atualizar seus dados pessoais.</p>
               </div>
             </button>
 
@@ -61,7 +45,21 @@ export function ClientAccount() {
 
               <div>
                 <h3>Seu endereço</h3>
-                <p>Consultar endereço de entrega cadastrado.</p>
+                <p>Consultar e atualizar seu endereço de entrega.</p>
+              </div>
+            </button>
+
+            <button
+              className="account-card"
+              onClick={() => navigate("/client/orders")}
+            >
+              <div className="account-card-icon">
+                <MdReceiptLong />
+              </div>
+
+              <div>
+                <h3>Seus pedidos</h3>
+                <p>Rastrear, consultar ou cancelar pedidos realizados.</p>
               </div>
             </button>
 

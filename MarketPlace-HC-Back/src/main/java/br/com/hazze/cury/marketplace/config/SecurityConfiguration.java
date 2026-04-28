@@ -59,8 +59,9 @@ public class SecurityConfiguration {
                         //  CLIENT ROUTES
 
                         // USER (próprio usuário)
-                        .requestMatchers(HttpMethod.GET, "/users/me").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.PUT, "/users/me").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/users/me").hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/users/me/profile").hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/users/me/address").hasRole("CLIENT")
 
                         // WISHLIST
                         .requestMatchers(HttpMethod.GET, "/wishlist/me").hasRole("CLIENT")

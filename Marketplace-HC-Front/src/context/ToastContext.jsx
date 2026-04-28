@@ -4,9 +4,9 @@ import "@/styles/components/Toast.css";
 const ToastContext = createContext(null);
 
 const MAX_TOASTS = 5;
-const DEFAULT_DURATION = 3000;
+const DEFAULT_DURATION = 1650;
 const EXIT_ANIMATION_DURATION = 300;
-const DEFAULT_REDIRECT_DELAY = 2500;
+const DEFAULT_REDIRECT_DELAY = 1500;
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);

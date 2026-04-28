@@ -24,6 +24,8 @@ export function AdminCategories() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [search, setSearch] = useState("");
+
   async function loadCategories() {
     try {
       setLoading(true);
@@ -113,6 +115,17 @@ export function AdminCategories() {
     }
   }
 
+  const filteredCategories = categories.filter((category) => {
+    const term = search.toLowerCase().trim();
+
+    if (!term) return true;
+
+    const name = category.name?.toLowerCase() || "";
+    const description = category.description?.toLowerCase() || "";
+
+    return name.includes(term) || description.includes(term);
+  });
+
   if (loading) {
     return (
       <>
@@ -128,6 +141,7 @@ export function AdminCategories() {
   return (
     <>
       <AdminHeader />
+
       <main className="admin-page">
         <section className="admin-hero">
           <h1>Gerenciar Categorias</h1>
@@ -172,10 +186,25 @@ export function AdminCategories() {
         </section>
 
         <section className="admin-panel">
-          <h2>Categorias cadastradas</h2>
+          <div className="admin-panel-header">
+            <h2>Categorias cadastradas</h2>
 
-          {!categories.length ? (
-            <p className="admin-empty">Nenhuma categoria cadastrada.</p>
+            <div className="admin-filters">
+              <input
+                type="text"
+                placeholder="Buscar categoria..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {!filteredCategories.length ? (
+            <p className="admin-empty">
+              {search
+                ? "Nenhuma categoria encontrada para essa busca."
+                : "Nenhuma categoria cadastrada."}
+            </p>
           ) : (
             <div className="admin-table-wrapper">
               <table className="admin-table">
@@ -188,7 +217,7 @@ export function AdminCategories() {
                 </thead>
 
                 <tbody>
-                  {categories.map((category) => (
+                  {filteredCategories.map((category) => (
                     <tr key={category.id}>
                       <td>{category.name}</td>
                       <td>{category.description || "-"}</td>

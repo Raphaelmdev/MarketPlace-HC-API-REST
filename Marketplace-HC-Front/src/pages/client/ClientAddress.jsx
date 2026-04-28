@@ -229,7 +229,7 @@ export function ClientAddress() {
       <main className="client-page">
         <section className="client-hero">
           <div className="client-hero-inner">
-            <h1>Seu endereço</h1>
+            <h1>Meu endereço</h1>
             <p>Endereço cadastrado para entrega dos seus pedidos.</p>
           </div>
         </section>
