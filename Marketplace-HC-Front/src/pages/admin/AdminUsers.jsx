@@ -17,6 +17,9 @@ export function AdminUsers() {
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [deletingUserId, setDeletingUserId] = useState(null);
 
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
   const loggedUser = JSON.parse(localStorage.getItem("user"));
 
   function formatRole(role) {
@@ -69,6 +72,11 @@ export function AdminUsers() {
       return;
     }
 
+    if (user.role === "ADMIN") {
+      showError("Não é permitido remover usuários administradores.");
+      return;
+    }
+
     const confirmed = window.confirm("Deseja realmente remover este usuário?");
     if (!confirmed) return;
 
@@ -89,6 +97,30 @@ export function AdminUsers() {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const filteredUsers = users.filter((user) => {
+    const term = search.toLowerCase().trim();
+    const numericTerm = search.replace(/\D/g, "");
+
+    const userName = user.name?.toLowerCase() || "";
+    const userEmail = user.email?.toLowerCase() || "";
+    const userCpf = user.cpf?.replace(/\D/g, "") || "";
+    const userPhone = user.phone?.replace(/\D/g, "") || "";
+
+    const matchesSearch =
+      !term ||
+      userName.includes(term) ||
+      userEmail.includes(term) ||
+      (numericTerm && userCpf.includes(numericTerm)) ||
+      (numericTerm && userPhone.includes(numericTerm));
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && user.active === true) ||
+      (statusFilter === "INACTIVE" && user.active === false);
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -113,10 +145,30 @@ export function AdminUsers() {
         </section>
 
         <section className="admin-panel">
-          <h2>Usuários cadastrados</h2>
+          <div className="admin-panel-header">
+            <h2>Usuários cadastrados</h2>
 
-          {!users.length ? (
-            <p className="admin-empty">Nenhum usuário cadastrado.</p>
+            <div className="admin-filters">
+              <input
+                type="text"
+                placeholder="Buscar Usuários..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Todos</option>
+                <option value="ACTIVE">Ativos</option>
+                <option value="INACTIVE">Inativos</option>
+              </select>
+            </div>
+          </div>
+
+          {!filteredUsers.length ? (
+            <p className="admin-empty">Nenhum usuário encontrado.</p>
           ) : (
             <div className="admin-table-wrapper">
               <table className="admin-table">
@@ -133,66 +185,74 @@ export function AdminUsers() {
                 </thead>
 
                 <tbody>
-                  {users.map((user) => {
-                    const isLoggedUser = user.id === loggedUser?.id;
+                    {filteredUsers.map((user) => {
+                      const isLoggedUser = user.id === loggedUser?.id;
+                      const isAdmin = user.role === "ADMIN";
 
-                    return (
-                      <tr key={user.id}>
-                        <td>{user.name || "-"}</td>
-                        <td>{user.email || "-"}</td>
-                        <td>{user.phone ? formatPhone(user.phone) : "-"}</td>
-                        <td>{user.cpf ? formatCPF(user.cpf) : "-"}</td>
-                        <td>{formatRole(user.role)}</td>
-                        <td>
-                          <span
-                            className={`admin-status ${
-                              user.active ? "active" : "inactive"
-                            }`}
-                          >
-                            {user.active ? "Ativo" : "Inativo"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="table-actions">
-                            <button
-                              onClick={() => handleToggleStatus(user)}
-                              disabled={
-                                updatingUserId === user.id ||
-                                (isLoggedUser && user.active)
-                              }
-                              title={
-                                isLoggedUser
-                                  ? "Você não pode desativar sua própria conta."
-                                  : ""
-                              }
-                            >
-                              {updatingUserId === user.id
-                                ? "Atualizando..."
-                                : user.active
-                                  ? "Desativar"
-                                  : "Ativar"}
-                            </button>
+                      return (
+                        <tr key={user.id}>
+                          
+                          {/* NOME LIMPO */}
+                          <td>{user.name || "-"}</td>
 
-                            <button
-                              className="danger"
-                              onClick={() => handleDelete(user)}
-                              disabled={deletingUserId === user.id || isLoggedUser}
-                              title={
-                                isLoggedUser
-                                  ? "Você não pode remover sua própria conta."
-                                  : ""
-                              }
+                          <td>{user.email || "-"}</td>
+                          <td>{user.phone ? formatPhone(user.phone) : "-"}</td>
+                          <td>{user.cpf ? formatCPF(user.cpf) : "-"}</td>
+                          <td>{formatRole(user.role)}</td>
+
+                          <td>
+                            <span
+                              className={`admin-status ${
+                                user.active ? "active" : "inactive"
+                              }`}
                             >
-                              {deletingUserId === user.id
-                                ? "Removendo..."
-                                : "Remover"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                              {user.active ? "Ativo" : "Inativo"}
+                            </span>
+                          </td>
+
+                          {/* AÇÕES */}
+                          <td>
+                            <div className="table-actions">
+
+                              {/* ATIVAR/DESATIVAR */}
+                              {!(isLoggedUser && user.active) && (
+                                <button
+                                  onClick={() => handleToggleStatus(user)}
+                                  disabled={updatingUserId === user.id}
+                                >
+                                  {updatingUserId === user.id
+                                    ? "Atualizando..."
+                                    : user.active
+                                    ? "Desativar"
+                                    : "Ativar"}
+                                </button>
+                              )}
+
+                              {/* REMOVER */}
+                              {!isLoggedUser && !isAdmin && (
+                                <button
+                                  className="danger"
+                                  onClick={() => handleDelete(user)}
+                                  disabled={deletingUserId === user.id}
+                                >
+                                  {deletingUserId === user.id
+                                    ? "Removendo..."
+                                    : "Remover"}
+                                </button>
+                              )}
+
+                              {/* 🔥 VOCÊ NA DIREITA */}
+                              {isLoggedUser && (
+                                <span className="self-badge right">Você</span>
+                              )}
+
+                            </div>
+                          </td>
+
+                        </tr>
+                      );
+                    })}
+               </tbody>
               </table>
             </div>
           )}

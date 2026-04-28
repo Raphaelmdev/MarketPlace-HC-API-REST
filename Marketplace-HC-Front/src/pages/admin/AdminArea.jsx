@@ -5,7 +5,8 @@ import {
   MdCategory,
   MdPeople,
   MdReceiptLong,
-  MdAdminPanelSettings
+  MdAdminPanelSettings,
+  MdPerson // 🔥 NOVO
 } from "react-icons/md";
 import "@/styles/pages/AdminPages.css";
 
@@ -23,6 +24,19 @@ export function AdminArea() {
         </section>
 
         <section className="admin-cards">
+
+          {/* 🔥 PERFIL */}
+          <button
+            className="admin-card"
+            onClick={() => navigate("/admin/profile")}
+          >
+            <MdPerson />
+            <div>
+              <h3>Seu perfil</h3>
+              <p>Visualizar e atualizar seus dados.</p>
+            </div>
+          </button>
+
           <button
             className="admin-card"
             onClick={() => navigate("/admin/products")}
@@ -77,6 +91,7 @@ export function AdminArea() {
               <p>Acompanhar e atualizar pedidos.</p>
             </div>
           </button>
+
         </section>
       </main>
     </>

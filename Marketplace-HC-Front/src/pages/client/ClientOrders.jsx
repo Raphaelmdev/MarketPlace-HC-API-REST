@@ -9,12 +9,15 @@ export function ClientOrders() {
   const { showSuccess, showError } = useToast();
 
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+
+  function normalizeStatus(status) {
+    return String(status || "").toUpperCase();
+  }
 
   function formatStatus(status) {
     const map = {
@@ -27,7 +30,7 @@ export function ClientOrders() {
       CANCELLED: "Cancelado",
     };
 
-    return map[status] || status || "Pendente";
+    return map[normalizeStatus(status)] || "Pendente";
   }
 
   function getStatusClass(status) {
@@ -41,11 +44,11 @@ export function ClientOrders() {
       CANCELLED: "canceled",
     };
 
-    return map[status] || "pending";
+    return map[normalizeStatus(status)] || "pending";
   }
 
   function canCancelOrder(status) {
-    return ["PENDING", "PAID", "CONFIRMED"].includes(status);
+    return ["PENDING", "PAID", "CONFIRMED"].includes(normalizeStatus(status));
   }
 
   async function loadOrders() {
@@ -53,10 +56,7 @@ export function ClientOrders() {
       setLoading(true);
 
       const data = await getMyOrders();
-      const ordersList = Array.isArray(data) ? data : [];
-
-      setOrders(ordersList);
-      setFilteredOrders(ordersList);
+      setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       showError(err.message || "Erro ao carregar pedidos.");
     } finally {
@@ -89,36 +89,32 @@ export function ClientOrders() {
     loadOrders();
   }, []);
 
-  useEffect(() => {
+  const filteredOrders = orders.filter((order) => {
     const searchText = search.trim().toLowerCase();
+    const orderId = String(order.id || "");
 
-    const result = orders.filter((order) => {
-      const orderId = String(order.id || "");
+    const products = (order.items || [])
+      .map((item) => item.productName || `Produto #${item.productId}`)
+      .join(" ")
+      .toLowerCase();
 
-      const products = (order.items || [])
-        .map((item) => item.productName || `Produto #${item.productId}`)
-        .join(" ")
-        .toLowerCase();
+    const matchesSearch =
+      !searchText ||
+      orderId.includes(searchText) ||
+      products.includes(searchText);
 
-      const matchesSearch =
-        !searchText ||
-        orderId.includes(searchText) ||
-        products.includes(searchText);
+    const matchesStatus =
+      !statusFilter ||
+      normalizeStatus(order.status) === normalizeStatus(statusFilter);
 
-      const matchesStatus = !statusFilter || order.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-
-    setFilteredOrders(result);
-  }, [search, statusFilter, orders]);
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
       <StoreHeader />
 
       <main className="client-page">
-        {/* HERO */}
         <section className="client-hero">
           <div className="client-hero-inner">
             <h1>Seus pedidos</h1>
@@ -126,7 +122,6 @@ export function ClientOrders() {
           </div>
         </section>
 
-        {/* CONTEÚDO */}
         <section className="orders-container">
           <div className="orders-header">
             <h2>Pedidos cadastrados</h2>
@@ -149,7 +144,6 @@ export function ClientOrders() {
                 <option value="CONFIRMED">Confirmado</option>
                 <option value="SHIPPED">Enviado</option>
                 <option value="DELIVERED">Entregue</option>
-                <option value="CANCELED">Cancelado</option>
                 <option value="CANCELLED">Cancelado</option>
               </select>
             </div>
@@ -159,6 +153,14 @@ export function ClientOrders() {
             <div className="empty-box">
               <h3>Carregando pedidos...</h3>
             </div>
+          ) : !orders.length ? (
+            <div className="empty-box">
+              <h3>Nenhum pedido cadastrado.</h3>
+            </div>
+          ) : !filteredOrders.length ? (
+            <div className="empty-box">
+              <h3>Nenhum pedido encontrado.</h3>
+            </div>
           ) : (
             <div className="orders-list">
               {filteredOrders.map((order) => (
@@ -167,12 +169,16 @@ export function ClientOrders() {
                     <div>
                       <h3>Pedido #{order.id}</h3>
 
-                      <p className={`order-status ${getStatusClass(order.status)}`}>
+                      <p
+                        className={`order-status ${getStatusClass(
+                          order.status
+                        )}`}
+                      >
                         {formatStatus(order.status)}
                       </p>
                     </div>
 
-                    <strong>{formatPrice(order.total)}</strong>
+                    <strong>{formatPrice(order.total || 0)}</strong>
                   </div>
 
                   <div className="order-items">
@@ -183,7 +189,8 @@ export function ClientOrders() {
                         </span>
 
                         <small>
-                          {item.quantity}x — {formatPrice(item.unitPrice)}
+                          {item.quantity || 1}x —{" "}
+                          {formatPrice(item.unitPrice || item.price || 0)}
                         </small>
                       </div>
                     ))}
@@ -202,16 +209,6 @@ export function ClientOrders() {
                   )}
                 </article>
               ))}
-
-              {!filteredOrders.length && (
-                <div className="empty-box">
-                  <h3>
-                    {orders.length
-                      ? "Nenhum pedido encontrado."
-                      : "Nenhum pedido cadastrado."}
-                  </h3>
-                </div>
-              )}
             </div>
           )}
         </section>
