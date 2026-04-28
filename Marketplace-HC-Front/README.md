@@ -1,4 +1,12 @@
-# Marketplace HazzeCury Front End
+# Marketplace HazzeCury - Front End
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow?style=for-the-badge)
+![TCC](https://img.shields.io/badge/TCC-Portfólio-gold?style=for-the-badge)
 
 Interface web do marketplace **HazzeCury**, desenvolvida com **React**, consumindo uma API REST para gerenciamento completo de usuários, produtos, carrinho e pedidos.
 
@@ -195,8 +203,8 @@ npm run build
 
 ## Autores
 
-**Raphael Martins Nascimento**
-**Nicholas Pedro**
+**Raphael Martins Nascimento**  
+**Nicholas Pedro**  
 Projeto desenvolvido como Trabalho de Conclusão de Curso (TCC) e portfólio pessoal.
 
 ---
