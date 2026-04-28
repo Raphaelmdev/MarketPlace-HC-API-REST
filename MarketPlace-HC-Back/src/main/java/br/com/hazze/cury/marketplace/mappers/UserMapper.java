@@ -1,11 +1,9 @@
 package br.com.hazze.cury.marketplace.mappers;
 
-import br.com.hazze.cury.marketplace.dto.request.UserAdminRequestDTO;
-import br.com.hazze.cury.marketplace.dto.request.UserClientRequestDTO;
+import br.com.hazze.cury.marketplace.dto.request.*;
 import br.com.hazze.cury.marketplace.dto.response.UserResponseDTO;
 import br.com.hazze.cury.marketplace.entities.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 import java.util.List;
 
@@ -35,6 +33,24 @@ public interface UserMapper {
     @Mapping(target = "role", ignore = true)
     User toEntity(UserAdminRequestDTO dto);
 
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "cart", ignore = true)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    void updateProfileFromDTO(UserClientUpdateDTO dto, @MappingTarget User user);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "cart", ignore = true)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    void updateAddressFromDTO(UserAddressUpdateDTO dto, @MappingTarget User user);
+
+ 
     UserResponseDTO toResponse(User user);
 
     List<UserResponseDTO> toResponseList(List<User> users);
