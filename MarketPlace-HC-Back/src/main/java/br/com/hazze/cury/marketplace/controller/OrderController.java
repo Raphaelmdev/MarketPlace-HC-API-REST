@@ -79,7 +79,7 @@ public class OrderController {
             @ApiResponse(responseCode = "403", description = "Acesso negado",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    @GetMapping("/my")
+    @GetMapping("/me")
     public ResponseEntity<List<OrderResponseDTO>> findMyOrders(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
 

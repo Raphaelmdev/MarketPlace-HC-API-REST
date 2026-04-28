@@ -3,7 +3,7 @@ import { AdminHeader } from "@/components/AdminHeader";
 import {
   deleteOrder,
   getAllOrders,
-  updateOrderStatus
+  updateOrderStatus,
 } from "@/services/adminService";
 import { useToast } from "@/context/ToastContext";
 import { formatPrice } from "@/utils/format";
@@ -14,7 +14,7 @@ const ORDER_STATUSES = [
   { value: "CONFIRMED", label: "Confirmado" },
   { value: "SHIPPED", label: "Enviado" },
   { value: "DELIVERED", label: "Entregue" },
-  { value: "CANCELED", label: "Cancelado" }
+  { value: "CANCELED", label: "Cancelado" },
 ];
 
 export function AdminOrders() {
@@ -22,6 +22,8 @@ export function AdminOrders() {
 
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [deletingOrderId, setDeletingOrderId] = useState(null);
@@ -94,6 +96,14 @@ export function AdminOrders() {
     return () => clearTimeout(delay);
   }, [search]);
 
+  const filteredOrders = orders.filter((order) => {
+    return (
+      statusFilter === "ALL" ||
+      order.status === statusFilter ||
+      (statusFilter === "CANCELED" && order.status === "CANCELED")
+    );
+  });
+
   return (
     <>
       <AdminHeader />
@@ -108,20 +118,33 @@ export function AdminOrders() {
           <div className="admin-panel-header">
             <h2>Pedidos cadastrados</h2>
 
-            <input
-              className="admin-search-input"
-              type="text"
-              placeholder="Buscar por nome, email ou CPF..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="admin-filters">
+              <input
+                type="text"
+                placeholder="Buscar por nome, email ou CPF..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Todos</option>
+                <option value="PENDING">Pendentes</option>
+                <option value="CONFIRMED">Confirmados</option>
+                <option value="SHIPPED">Enviados</option>
+                <option value="DELIVERED">Entregues</option>
+                <option value="CANCELED">Cancelados</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
             <p className="admin-loading">Carregando pedidos...</p>
-          ) : !orders.length ? (
+          ) : !filteredOrders.length ? (
             <p className="admin-empty">
-              {search
+              {search || statusFilter !== "ALL"
                 ? "Nenhum pedido encontrado para essa busca."
                 : "Nenhum pedido cadastrado."}
             </p>
@@ -140,7 +163,7 @@ export function AdminOrders() {
                 </thead>
 
                 <tbody>
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <tr key={order.id}>
                       <td>#{order.id}</td>
 
@@ -167,8 +190,9 @@ export function AdminOrders() {
                           <div className="admin-order-items">
                             {(order.items || []).map((item, index) => (
                               <span key={index}>
-                                {item.productName || `Produto #${item.productId}`} —{" "}
-                                {item.quantity}x
+                                {item.productName ||
+                                  `Produto #${item.productId}`}{" "}
+                                — {item.quantity}x
                               </span>
                             ))}
                           </div>

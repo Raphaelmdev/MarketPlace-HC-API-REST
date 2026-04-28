@@ -5,7 +5,7 @@ import {
   deleteProduct,
   getAdminCategories,
   getAdminProducts,
-  updateProduct
+  updateProduct,
 } from "@/services/adminService";
 import { useToast } from "@/context/ToastContext";
 import { formatPrice, onlyNumbers } from "@/utils/format";
@@ -19,7 +19,7 @@ const initialForm = {
   stock: "",
   imageUrl: "",
   categoryId: "",
-  active: true
+  active: true,
 };
 
 export function AdminProducts() {
@@ -27,10 +27,15 @@ export function AdminProducts() {
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   async function loadData() {
     try {
@@ -38,7 +43,7 @@ export function AdminProducts() {
 
       const [productsData, categoriesData] = await Promise.all([
         getAdminProducts(),
-        getAdminCategories()
+        getAdminCategories(),
       ]);
 
       setProducts(Array.isArray(productsData) ? productsData : []);
@@ -59,7 +64,7 @@ export function AdminProducts() {
 
     setForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   }
 
@@ -68,7 +73,7 @@ export function AdminProducts() {
 
     setForm((prev) => ({
       ...prev,
-      price: numbers ? formatPrice(Number(numbers) / 100) : ""
+      price: numbers ? formatPrice(Number(numbers) / 100) : "",
     }));
   }
 
@@ -84,19 +89,21 @@ export function AdminProducts() {
       name: product.name || "",
       description: product.description || "",
       price: product.price ? formatPrice(product.price) : "",
-      stock: product.stock || "",
+      stock: String(product.stock ?? ""),
       imageUrl: product.imageUrl || "",
-      categoryId: product.categoryId || product.category?.id || "",
-      active: product.active ?? true
+      categoryId: String(product.categoryId || product.category?.id || ""),
+      active: product.active ?? true,
     });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    const priceValue = Number(onlyNumbers(form.price)) / 100;
+
     const errors = validateProductForm({
       ...form,
-      price: Number(onlyNumbers(form.price)) / 100
+      price: priceValue,
     });
 
     const firstError = Object.values(errors)[0];
@@ -109,11 +116,11 @@ export function AdminProducts() {
     const payload = {
       name: form.name.trim(),
       description: form.description.trim(),
-      price: Number(onlyNumbers(form.price)) / 100,
+      price: priceValue,
       stock: Number(form.stock || 0),
       imageUrl: form.imageUrl.trim(),
       categoryId: Number(form.categoryId),
-      active: form.active
+      active: form.active,
     };
 
     try {
@@ -148,6 +155,30 @@ export function AdminProducts() {
       showError(err.message || "Erro ao remover produto.");
     }
   }
+
+  const filteredProducts = products.filter((product) => {
+    const term = search.toLowerCase().trim();
+
+    const name = product.name?.toLowerCase() || "";
+    const description = product.description?.toLowerCase() || "";
+    const category =
+      product.categoryName?.toLowerCase() ||
+      product.category?.name?.toLowerCase() ||
+      "";
+
+    const matchesSearch =
+      !term ||
+      name.includes(term) ||
+      description.includes(term) ||
+      category.includes(term);
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && product.active === true) ||
+      (statusFilter === "INACTIVE" && product.active === false);
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -219,7 +250,7 @@ export function AdminProducts() {
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  active: e.target.value === "true"
+                  active: e.target.value === "true",
                 }))
               }
             >
@@ -248,8 +279,8 @@ export function AdminProducts() {
                 {saving
                   ? "Salvando..."
                   : editingId
-                    ? "Atualizar produto"
-                    : "Cadastrar produto"}
+                  ? "Atualizar produto"
+                  : "Cadastrar produto"}
               </button>
 
               {editingId && (
@@ -262,10 +293,34 @@ export function AdminProducts() {
         </section>
 
         <section className="admin-panel">
-          <h2>Produtos cadastrados</h2>
+          <div className="admin-panel-header">
+            <h2>Produtos cadastrados</h2>
 
-          {!products.length ? (
-            <p className="admin-empty">Nenhum produto cadastrado.</p>
+            <div className="admin-filters">
+              <input
+                type="text"
+                placeholder="Buscar por produto, descrição ou categoria..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Todos</option>
+                <option value="ACTIVE">Ativos</option>
+                <option value="INACTIVE">Inativos</option>
+              </select>
+            </div>
+          </div>
+
+          {!filteredProducts.length ? (
+            <p className="admin-empty">
+              {search || statusFilter !== "ALL"
+                ? "Nenhum produto encontrado para essa busca."
+                : "Nenhum produto cadastrado."}
+            </p>
           ) : (
             <div className="admin-table-wrapper products-table-scroll">
               <table className="admin-table">
@@ -281,12 +336,14 @@ export function AdminProducts() {
                 </thead>
 
                 <tbody>
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <tr key={product.id}>
                       <td>{product.name}</td>
                       <td>{formatPrice(product.price)}</td>
                       <td>{product.stock ?? 0}</td>
-                      <td>{product.categoryName || product.category?.name || "-"}</td>
+                      <td>
+                        {product.categoryName || product.category?.name || "-"}
+                      </td>
                       <td>
                         <span
                           className={`admin-status ${

@@ -22,6 +22,7 @@ import { ClientAddress } from "@/pages/client/ClientAddress";
 import { ClientWishlist } from "@/pages/client/ClientWishlist";
 
 /* ROTAS ADMIN */
+import { AdminProfile } from "@/pages/admin/AdminProfile";
 import { AdminArea } from "@/pages/admin/AdminArea";
 import { AdminProducts } from "@/pages/admin/AdminProducts";
 import { AdminCategories } from "@/pages/admin/AdminCategories";
@@ -115,7 +116,14 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+           path="/admin/profile"
+            element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <AdminProfile />
+            </ProtectedRoute>
+         }
+       />
         <Route
           path="/admin/products"
           element={

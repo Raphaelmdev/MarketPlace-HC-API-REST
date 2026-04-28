@@ -118,7 +118,7 @@ export function ClientProfile() {
       <main className="client-page">
         <section className="client-hero">
           <div className="client-hero-inner">
-            <h1>Seu perfil</h1>
+            <h1>Meu perfil</h1>
             <p>Visualize e atualize os dados principais da sua conta.</p>
           </div>
         </section>
@@ -177,11 +177,6 @@ export function ClientProfile() {
                     <strong>
                       {profile?.cpf ? formatCPF(profile.cpf) : "Não informado"}
                     </strong>
-                  </div>
-
-                  <div>
-                    <span>Tipo de conta:</span>
-                    <strong>{formatRole(profile?.role)}</strong>
                   </div>
                 </>
               ) : (

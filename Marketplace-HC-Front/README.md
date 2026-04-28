@@ -1,4 +1,4 @@
-# Marketplace HazzeCury Front-End
+# Marketplace HazzeCury Front End
 
 Interface web do marketplace **HazzeCury**, desenvolvida com **React**, consumindo uma API REST para gerenciamento completo de usuários, produtos, carrinho e pedidos.
 

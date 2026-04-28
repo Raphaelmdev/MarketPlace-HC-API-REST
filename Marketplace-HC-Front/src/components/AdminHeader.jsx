@@ -9,7 +9,6 @@ import {
   MdLogout,
   MdPeople,
   MdPerson,
-  MdReceiptLong
 } from "react-icons/md";
 import "@/styles/components/AdminHeader.css";
 
@@ -22,7 +21,6 @@ export function AdminHeader() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     navigate("/home", { replace: true });
   }
 
@@ -74,6 +72,11 @@ export function AdminHeader() {
             <MdAdminPanelSettings />
             Criar administrador
           </NavLink>
+
+          <NavLink to="/admin/profile">
+            <MdPerson />
+            Meu perfil
+          </NavLink>
         </nav>
 
         <div
@@ -89,7 +92,6 @@ export function AdminHeader() {
               <strong>Administrador</strong>
             </div>
           </div>
-
           {menuOpen && (
             <div className="admin-dropdown">
               <button onClick={handleLogout}>
