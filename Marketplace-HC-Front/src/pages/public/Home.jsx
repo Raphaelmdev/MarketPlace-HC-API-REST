@@ -26,7 +26,7 @@ export function Home() {
     <p>Alfaiataria moderna para homens de presença</p>
 
     <div className="hero-buttons">
-      <Link to="/interface" className="btn-outline main-btn">
+      <Link to="/products" className="btn-outline main-btn">
           Veja nossa vitrine
       </Link>
     </div>

@@ -10,6 +10,7 @@ import { Home } from "@/pages/public/Home";
 import { ForgotPassword } from "@/pages/public/ForgotPassword";
 import { ResetPassword } from "@/pages/public/ResetPassword";
 import { IdentifyAccount } from "@/pages/public/IdentifyAccount";
+import { Products } from "@/pages/shop/Products";
 
 /* ROTAS DE LOJA */
 import { ClientCart } from "@/pages/shop/Cart";
@@ -37,6 +38,8 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/home" replace />} />
 
         <Route path="/home" element={<Home />} />
+
+       <Route path="/products" element={<Products />} />
 
         <Route
           path="/login"
