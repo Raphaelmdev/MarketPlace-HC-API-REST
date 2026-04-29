@@ -27,27 +27,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        var token = recoverToken(request);
+         String path = request.getServletPath();
 
-        if (token != null) {
-            var subject = jwtService.validateToken(token);
-
-            if (subject != null) {
-                User user = userRepository.findByEmail(subject)
-                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        user.getAuthorities()
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        }
-
+    if (path.startsWith("/uploads/")) {
         filterChain.doFilter(request, response);
+        return;
     }
+
+    var token = recoverToken(request);
+
+    if (token != null) {
+        var subject = jwtService.validateToken(token);
+
+        if (subject != null) {
+            User user = userRepository.findByEmail(subject)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    user,
+                    null,
+                    user.getAuthorities()
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
 
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");

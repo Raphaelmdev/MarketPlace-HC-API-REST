@@ -584,3 +584,34 @@
 .self-badge.right {
   margin-left: center;
 }
+
+.admin-image-upload {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-image-upload label {
+  font-family: "Raleway", sans-serif;
+  font-weight: 800;
+  color: var(--vinho-escuro, #2a0810);
+}
+
+.admin-image-upload input[type="file"] {
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-image-preview {
+  width: 160px;
+  height: 200px;
+  border: 1px solid rgba(184, 146, 42, 0.45);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffaf3;
+}
+
+.admin-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

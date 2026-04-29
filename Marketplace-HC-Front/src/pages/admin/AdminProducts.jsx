@@ -6,6 +6,7 @@ import {
   getAdminCategories,
   getAdminProducts,
   updateProduct,
+  uploadProductImage,
 } from "@/services/adminService";
 import { useToast } from "@/context/ToastContext";
 import { formatPrice, onlyNumbers } from "@/utils/format";
@@ -33,6 +34,9 @@ export function AdminProducts() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -80,6 +84,8 @@ export function AdminProducts() {
   function resetForm() {
     setForm(initialForm);
     setEditingId(null);
+    setImageFile(null);
+    setImagePreview("");
   }
 
   function handleEdit(product) {
@@ -94,7 +100,19 @@ export function AdminProducts() {
       categoryId: String(product.categoryId || product.category?.id || ""),
       active: product.active ?? true,
     });
+
+    setImagePreview(product.imageUrl || "");
+    setImageFile(null);
   }
+
+  function handleImageChange(e) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+}
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -126,11 +144,22 @@ export function AdminProducts() {
     try {
       setSaving(true);
 
+      let savedProduct;
       if (editingId) {
-        await updateProduct(editingId, payload);
+        savedProduct = await updateProduct(editingId, payload);
+
+        if (imageFile) {
+          await uploadProductImage(editingId, imageFile);
+        }
+
         showSuccess("Produto atualizado com sucesso.");
       } else {
-        await createProduct(payload);
+        savedProduct = await createProduct(payload);
+
+        if (imageFile && savedProduct?.id) {
+          await uploadProductImage(savedProduct.id, imageFile);
+        }
+
         showSuccess("Produto cadastrado com sucesso.");
       }
 
@@ -258,14 +287,21 @@ export function AdminProducts() {
               <option value="false">Inativo</option>
             </select>
 
-            <input
-              name="imageUrl"
-              value={form.imageUrl}
-              onChange={handleChange}
-              placeholder="URL da imagem"
-              className="admin-full"
-            />
+            <div className="admin-image-upload admin-full">
+              <label>Imagem do produto</label>
 
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+
+              {imagePreview && (
+                <div className="admin-image-preview">
+                  <img src={imagePreview} alt="Prévia do produto" />
+                </div>
+              )}
+            </div>
             <textarea
               name="description"
               value={form.description}

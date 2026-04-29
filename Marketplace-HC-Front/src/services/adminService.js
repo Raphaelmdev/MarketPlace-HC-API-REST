@@ -50,6 +50,28 @@ export async function updateProduct(productId, data) {
   return handleResponse(response);
 }
 
+export async function uploadProductImage(productId, imageFile) {
+  const formData = new FormData();
+  formData.append("file", imageFile);
+
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/products/${productId}/image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.message || "Erro ao enviar imagem.");
+  }
+
+  return response.json().catch(() => null);
+}
+
 export async function deleteProduct(productId) {
   const response = await fetch(`${API_URL}/products/${productId}`, {
     method: "DELETE",

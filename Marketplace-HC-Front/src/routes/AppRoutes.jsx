@@ -11,6 +11,8 @@ import { ForgotPassword } from "@/pages/public/ForgotPassword";
 import { ResetPassword } from "@/pages/public/ResetPassword";
 import { IdentifyAccount } from "@/pages/public/IdentifyAccount";
 import { Products } from "@/pages/shop/Products";
+import { ProductDetail } from "@/pages/shop/ProductDetail";
+
 
 /* ROTAS DE LOJA */
 import { ClientCart } from "@/pages/shop/Cart";
@@ -40,6 +42,8 @@ export function AppRoutes() {
         <Route path="/home" element={<Home />} />
 
        <Route path="/products" element={<Products />} />
+
+       <Route path="/products/:id" element={<ProductDetail />} />
 
         <Route
           path="/login"

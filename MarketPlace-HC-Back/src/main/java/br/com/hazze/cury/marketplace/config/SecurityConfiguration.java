@@ -55,6 +55,7 @@ public class SecurityConfiguration {
 
                         .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
 
                         //  CLIENT ROUTES
 
