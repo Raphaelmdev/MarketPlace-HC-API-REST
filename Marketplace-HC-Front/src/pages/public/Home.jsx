@@ -14,26 +14,26 @@ export function Home() {
 
   return (
     <div className="home">
-  
-  {/* TOPO DIREITO */}
-  <div className="top-actions">
-    <Link to="/login" className="btn-outline">Entrar</Link>
-    <Link to="/register" className="btn-outline">Cadastrar</Link>
-  </div>
 
-  <section className="hero">
-    <h1>HazzeCury</h1>
-    <p>Alfaiataria moderna para homens de presença</p>
+      {/* TOPO DIREITO */}
+      <div className="top-actions">
+        <Link to="/login" className="btn-outline">Entrar</Link>
+        <Link to="/register" className="btn-outline">Cadastrar</Link>
+      </div>
 
-    <div className="hero-buttons">
-      <Link to="/products" className="btn-outline main-btn">
-          Veja nossa vitrine
-      </Link>
-    </div>
-  </section>
+      <section className="hero">
+        <h1>HazzeCury</h1>
+        <p>Alfaiataria moderna para homens de presença</p>
+
+        <div className="hero-buttons">
+          <Link to="/products" className="btn-outline main-btn">
+            Veja nossa vitrine
+          </Link>
+        </div>
+      </section>
 
       <section className="social">
-        <h2>Redes sociais</h2>
+        <h2>Redes Sociais</h2>
 
         <a
           href="https://instagram.com"
@@ -48,40 +48,45 @@ export function Home() {
       <section className="devs">
         <h2 className="devs-title">Equipe</h2>
 
-        <div className="dev-card">
-          <h3>Raphael Martins</h3>
-          <div className="social-links">
-            <a href="https://github.com/Raphaelmdev" target="_blank" rel="Github">GitHub</a>
-            <a href="#" target="_blank" rel="Instagram">Instagram</a>
-            <a href="https://www.linkedin.com/in/raphael-martins-15539826a/" target="_blank" rel="LinkedIn">LinkedIn</a>
-          </div>
-        </div>
+        {/* ✅ wrapper que organiza os cards em grade */}
+        <div className="dev-cards-grid">
 
-        <div className="dev-card">
-          <h3>Nicholas Pedro</h3>
-          <div className="social-links">
-            <a href="https://github.com/NicholasPedroF" target="_blank" rel="Github">GitHub</a>
-            <a href="#" target="_blank" rel="Instagram">Instagram</a>
-            <a href="https://www.linkedin.com/in/nicholas-pedro-ferreira-da-silva/" target="_blank" rel="LinkedIn">LinkedIn</a>
+          <div className="dev-card">
+            <h3>Raphael Martins</h3>
+            <div className="social-links">
+              <a href="https://github.com/Raphaelmdev" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="#" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="https://www.linkedin.com/in/raphael-martins-15539826a/" target="_blank" rel="noreferrer">LinkedIn</a>
+            </div>
           </div>
-        </div>
 
-        <div className="dev-card">
-          <h3>Miguel Solon</h3>
-          <div className="social-links">
-            <a href="https://github.com/miguel-cury-dados" target="_blank" rel="Github">GitHub</a>
-            <a href="#" target="_blank" rel="Instagram">Instagram</a>
-            <a href="#" target="_blank" rel="LinkedIn">LinkedIn</a>
+          <div className="dev-card">
+            <h3>Nicholas Pedro</h3>
+            <div className="social-links">
+              <a href="https://github.com/NicholasPedroF" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="#" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="https://www.linkedin.com/in/nicholas-pedro-ferreira-da-silva/" target="_blank" rel="noreferrer">LinkedIn</a>
+            </div>
           </div>
-        </div>
 
-        <div className="dev-card">
-          <h3>Reinaldo Campos</h3>
-          <div className="social-links">
-            <a href="https://github.com/reinaldodlc" target="_blank" rel="Github">GitHub</a>
-            <a href="#" target="_blank" rel="Instagram">Instagram</a>
-            <a href="#" target="_blank" rel="LinkedIn">LinkedIn</a>
+          <div className="dev-card">
+            <h3>Miguel Solon</h3>
+            <div className="social-links">
+              <a href="https://github.com/miguel-cury-dados" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="#" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="#" target="_blank" rel="noreferrer">LinkedIn</a>
+            </div>
           </div>
+
+          <div className="dev-card">
+            <h3>Reinaldo Campos</h3>
+            <div className="social-links">
+              <a href="https://github.com/reinaldodlc" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="#" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="#" target="_blank" rel="noreferrer">LinkedIn</a>
+            </div>
+          </div>
+
         </div>
       </section>
 
