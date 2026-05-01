@@ -68,6 +68,8 @@ export async function login(data) {
     })
   );
 
+  window.dispatchEvent(new Event("authChanged"));
+
   return result;
 }
 
@@ -111,4 +113,6 @@ export async function resetPassword(data) {
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+
+  window.dispatchEvent(new Event("authChanged"));
 }

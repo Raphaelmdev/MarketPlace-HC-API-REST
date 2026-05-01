@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { AdminHeader } from "@/components/AdminHeader";
 import {
   createCategory,
   deleteCategory,
@@ -129,7 +128,7 @@ export function AdminCategories() {
   if (loading) {
     return (
       <>
-        <AdminHeader />
+        
 
         <main className="admin-page">
           <p className="admin-loading">Carregando categorias...</p>
@@ -140,7 +139,7 @@ export function AdminCategories() {
 
   return (
     <>
-      <AdminHeader />
+      
 
       <main className="admin-page">
         <section className="admin-hero">

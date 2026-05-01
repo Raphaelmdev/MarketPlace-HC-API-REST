@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { AdminHeader } from "@/components/AdminHeader";
 import {
   deleteOrder,
   getAllOrders,
@@ -9,13 +8,23 @@ import { useToast } from "@/context/ToastContext";
 import { formatPrice } from "@/utils/format";
 import "@/styles/pages/AdminPages.css";
 
+/* 🔹 LABELS DE AÇÃO (SELECT) */
 const ORDER_STATUSES = [
   { value: "PENDING", label: "Pendente" },
-  { value: "CONFIRMED", label: "Confirmado" },
-  { value: "SHIPPED", label: "Enviado" },
-  { value: "DELIVERED", label: "Entregue" },
-  { value: "CANCELED", label: "Cancelado" },
+  { value: "CONFIRMED", label: "Confirmar" },
+  { value: "SHIPPED", label: "Enviar" },
+  { value: "DELIVERED", label: "Entregar" },
+  { value: "CANCELED", label: "Cancelar" }, // 👈 ação
 ];
+
+/* 🔹 LABELS DE ESTADO (BADGE) */
+const ORDER_STATUS_LABELS = {
+  PENDING: "Pendente",
+  CONFIRMED: "Confirmado",
+  SHIPPED: "Enviado",
+  DELIVERED: "Entregue",
+  CANCELED: "Cancelado", // 👈 estado correto
+};
 
 export function AdminOrders() {
   const { showSuccess, showError } = useToast();
@@ -29,8 +38,7 @@ export function AdminOrders() {
   const [deletingOrderId, setDeletingOrderId] = useState(null);
 
   function formatStatus(status) {
-    const found = ORDER_STATUSES.find((item) => item.value === status);
-    return found?.label || status || "Pendente";
+    return ORDER_STATUS_LABELS[status] || status || "Pendente";
   }
 
   function isValidStatus(status) {
@@ -106,8 +114,6 @@ export function AdminOrders() {
 
   return (
     <>
-      <AdminHeader />
-
       <main className="admin-page">
         <section className="admin-hero">
           <h1>Gerenciar Pedidos</h1>
@@ -163,73 +169,84 @@ export function AdminOrders() {
                 </thead>
 
                 <tbody>
-                  {filteredOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td>#{order.id}</td>
+                  {filteredOrders.map((order) => {
+                    const isFinalStatus =
+                      order.status === "CANCELED" ||
+                      order.status === "DELIVERED";
 
-                      <td>
-                        {order.userName ||
-                          order.clientName ||
-                          order.user?.name ||
-                          order.userEmail ||
-                          "-"}
-                      </td>
+                    return (
+                      <tr key={order.id}>
+                        <td>#{order.id}</td>
 
-                      <td>
-                        <span
-                          className={`admin-status status-${order.status?.toLowerCase()}`}
-                        >
-                          {formatStatus(order.status)}
-                        </span>
-                      </td>
+                        <td>
+                          {order.userName ||
+                            order.clientName ||
+                            order.user?.name ||
+                            order.userEmail ||
+                            "-"}
+                        </td>
 
-                      <td>{formatPrice(order.total)}</td>
+                        <td>
+                          <span
+                            className={`admin-status status-${order.status?.toLowerCase()}`}
+                          >
+                            {formatStatus(order.status)}
+                          </span>
+                        </td>
 
-                      <td>
-                        {(order.items || []).length > 0 ? (
-                          <div className="admin-order-items">
-                            {(order.items || []).map((item, index) => (
-                              <span key={index}>
-                                {item.productName ||
-                                  `Produto #${item.productId}`}{" "}
-                                — {item.quantity}x
-                              </span>
-                            ))}
+                        <td>{formatPrice(order.total)}</td>
+
+                        <td>
+                          {(order.items || []).length > 0 ? (
+                            <div className="admin-order-items">
+                              {(order.items || []).map((item, index) => (
+                                <span key={index}>
+                                  {item.productName ||
+                                    `Produto #${item.productId}`}{" "}
+                                  — {item.quantity}x
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+
+                        <td>
+                          <div className="table-actions">
+                            <select
+                              value={order.status || "PENDING"}
+                              disabled={
+                                updatingOrderId === order.id || isFinalStatus
+                              }
+                              onChange={(e) =>
+                                handleChangeStatus(order.id, e.target.value)
+                              }
+                            >
+                              {ORDER_STATUSES.map((status) => (
+                                <option
+                                  key={status.value}
+                                  value={status.value}
+                                >
+                                  {status.label}
+                                </option>
+                              ))}
+                            </select>
+
+                            <button
+                              className="danger"
+                              onClick={() => handleDelete(order.id)}
+                              disabled={deletingOrderId === order.id}
+                            >
+                              {deletingOrderId === order.id
+                                ? "Removendo..."
+                                : "Remover"}
+                            </button>
                           </div>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-
-                      <td>
-                        <div className="table-actions">
-                          <select
-                            value={order.status || "PENDING"}
-                            disabled={updatingOrderId === order.id}
-                            onChange={(e) =>
-                              handleChangeStatus(order.id, e.target.value)
-                            }
-                          >
-                            {ORDER_STATUSES.map((status) => (
-                              <option key={status.value} value={status.value}>
-                                {status.label}
-                              </option>
-                            ))}
-                          </select>
-
-                          <button
-                            className="danger"
-                            onClick={() => handleDelete(order.id)}
-                            disabled={deletingOrderId === order.id}
-                          >
-                            {deletingOrderId === order.id
-                              ? "Removendo..."
-                              : "Remover"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

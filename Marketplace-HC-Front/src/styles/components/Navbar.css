@@ -1,17 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap');
-
+/* ── Navbar ── */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: #0F2A4A;
-  border-bottom: 1px solid rgba(107, 26, 42, 0.4);
+  background: rgba(7, 24, 40, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(184, 146, 42, 0.18);
 }
 
 .navbar-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 2.5rem;
   height: 68px;
   display: flex;
   align-items: center;
@@ -19,31 +19,31 @@
   gap: 2rem;
 }
 
-/* Brand */
+/* ── Brand ── */
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   text-decoration: none;
   flex-shrink: 0;
 }
 
 .brand-icon {
-  color: #6B1A2A;
-  font-size: 1.1rem;
+  color: var(--dourado);
+  font-size: 0.9rem;
   line-height: 1;
 }
 
 .brand-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.4rem;
+  font-family: var(--fonte-titulo);
+  font-size: 1.15rem;
   font-weight: 600;
-  color: #f0e6d3;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
+  color: var(--branco-puro);
 }
 
-/* Links */
+/* ── Links ── */
 .navbar-links {
   display: flex;
   align-items: center;
@@ -54,12 +54,12 @@
 }
 
 .navbar-links a {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
+  font-family: var(--fonte-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #b0bec5;
+  color: rgba(237, 232, 223, 0.55);
   text-decoration: none;
   transition: color 0.2s;
   position: relative;
@@ -72,71 +72,97 @@
   left: 0;
   width: 0;
   height: 1px;
-  background: #6B1A2A;
+  background: var(--dourado);
   transition: width 0.25s ease;
 }
 
 .navbar-links a:hover {
-  color: #f0e6d3;
+  color: var(--dourado);
 }
 
 .navbar-links a:hover::after {
   width: 100%;
 }
 
-/* Actions */
+/* ── Actions ── */
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 1.25rem;
 }
 
 .nav-icon {
-  color: #b0bec5;
+  color: rgba(237, 232, 223, 0.55);
   display: flex;
   align-items: center;
+  text-decoration: none;
   transition: color 0.2s;
 }
 
 .nav-icon:hover {
-  color: #f0e6d3;
+  color: var(--dourado);
 }
 
+/* ── Cart Badge ── */
+.cart-icon {
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: var(--dourado);
+  color: var(--vinho-escuro);
+  font-family: var(--fonte-ui);
+  font-size: 0.55rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── CTA / Logout ── */
 .nav-cta {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  font-family: var(--fonte-titulo);
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #f0e6d3;
+  color: var(--dourado);
   text-decoration: none;
-  border: 1px solid rgba(107, 26, 42, 0.7);
-  padding: 0.45rem 1.1rem;
-  transition: background 0.2s, border-color 0.2s;
+  border: 1px solid rgba(184, 146, 42, 0.45);
+  padding: 0.5rem 1.2rem;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
 }
 
 .nav-cta:hover {
-  background: #6B1A2A;
-  border-color: #6B1A2A;
+  background: var(--dourado);
+  color: var(--vinho-escuro);
+  border-color: var(--dourado);
 }
 
 .nav-logout {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  font-family: var(--fonte-ui);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #b0bec5;
+  color: rgba(237, 232, 223, 0.45);
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.2s;
   padding: 0;
+  transition: color 0.2s;
 }
 
 .nav-logout:hover {
-  color: #f0e6d3;
+  color: var(--dourado);
 }
 
-/* Burger */
+/* ── Burger ── */
 .navbar-burger {
   display: none;
   flex-direction: column;
@@ -150,70 +176,63 @@
 .navbar-burger span {
   display: block;
   width: 22px;
-  height: 1.5px;
-  background: #b0bec5;
+  height: 1px;
+  background: rgba(237, 232, 223, 0.6);
   transition: transform 0.25s, opacity 0.25s;
 }
 
 .navbar-burger.open span:nth-child(1) {
-  transform: translateY(6.5px) rotate(45deg);
+  transform: translateY(6px) rotate(45deg);
 }
 .navbar-burger.open span:nth-child(2) {
   opacity: 0;
 }
 .navbar-burger.open span:nth-child(3) {
-  transform: translateY(-6.5px) rotate(-45deg);
+  transform: translateY(-6px) rotate(-45deg);
 }
 
-/* Mobile menu */
+/* ── Mobile Menu ── */
 .navbar-mobile {
   display: none;
   flex-direction: column;
-  background: #0F2A4A;
-  border-top: 1px solid rgba(107, 26, 42, 0.3);
-  padding: 1rem 2rem 1.5rem;
-  gap: 0.2rem;
+  background: var(--marinho);
+  border-top: 1px solid rgba(184, 146, 42, 0.12);
+  padding: 1rem 2.5rem 1.5rem;
+  gap: 0;
 }
 
 .navbar-mobile a,
 .navbar-mobile button {
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 0.14em;
+  font-family: var(--fonte-ui);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #b0bec5;
+  color: rgba(237, 232, 223, 0.55);
   text-decoration: none;
   background: none;
   border: none;
+  border-bottom: 1px solid rgba(184, 146, 42, 0.08);
   cursor: pointer;
-  padding: 0.6rem 0;
+  padding: 0.85rem 0;
   text-align: left;
   transition: color 0.2s;
+  width: 100%;
 }
 
 .navbar-mobile a:hover,
 .navbar-mobile button:hover {
-  color: #f0e6d3;
+  color: var(--dourado);
 }
 
+/* ── Responsivo ── */
 @media (max-width: 768px) {
-  .navbar-links { display: none; }
+  .navbar-links   { display: none; }
   .navbar-actions { display: none; }
-  .navbar-burger { display: flex; }
+  .navbar-burger  { display: flex; }
   .navbar-mobile.open { display: flex; }
 }
-.cart-icon {
-  position: relative;
-}
 
-.cart-badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: #6B1A2A; /* vinho */
-  color: #fff;
-  font-size: 10px;
-  padding: 2px 5px;
-  border-radius: 50%;
-  font-family: 'Jost', sans-serif;
+@media (max-width: 480px) {
+  .navbar-inner { padding: 0 1.25rem; }
 }

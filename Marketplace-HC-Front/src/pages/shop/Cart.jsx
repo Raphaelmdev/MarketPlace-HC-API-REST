@@ -1,91 +1,93 @@
-import { useEffect, useState } from "react";
-import { StoreHeader } from "@/components/StoreHeader";
-import {
-  createCart,
-  createOrderFromCart,
-  getMyCartItems,
-  removeCartItem,
-  updateCartItem,
-} from "@/services/clientService";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createOrderFromCart } from "@/services/clientService";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
+import { getUser } from "@/utils/auth";
 import { formatPrice } from "@/utils/format";
-import "@/styles/pages/ClientPages.css";
+import "@/styles/pages/Cart.css";
 
-export function ClientCart() {
+export function Cart() {
   const { showSuccess, showError } = useToast();
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
 
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    cart,
+    loadingCart,
+    removeFromCart,
+    updateQuantity,
+    loadCart,
+    migrateGuestCartToUserCart,
+    clearGuestCart,
+  } = useCart();
+
+  const navigate = useNavigate();
+  const user = getUser();
+  const isLogged = !!user && user.role === "CLIENT";
+
   const [updatingId, setUpdatingId] = useState(null);
   const [removingId, setRemovingId] = useState(null);
   const [finishing, setFinishing] = useState(false);
   const [search, setSearch] = useState("");
+  const [guestCartHandled, setGuestCartHandled] = useState(false);
 
-  const isLogged = Boolean(localStorage.getItem("token"));
+  const guestCart = JSON.parse(localStorage.getItem("cart_guest")) || [];
 
-  async function loadCartItems() {
+  const showGuestWarning =
+    isLogged && guestCart.length > 0 && !guestCartHandled;
+
+  const items = Array.isArray(cart) ? cart : cart?.items || [];
+
+  const getItemId = (item) => item.cartItemId || item.id;
+
+  const getProductId = (item) => item.productId || item.id;
+
+  const getItemName = (item) =>
+    item.productName ||
+    item.name ||
+    item.product?.name ||
+    `Produto #${getProductId(item)}`;
+
+  const getItemPrice = (item) =>
+    Number(item.unitPrice || item.price || item.product?.price || 0);
+
+  const getItemQuantity = (item) => Number(item.quantity || 1);
+
+  const getItemSubtotal = (item) =>
+    Number(
+      item.subTotal ??
+        item.subtotal ??
+        getItemPrice(item) * getItemQuantity(item)
+    );
+
+  const totalFromItems = items.reduce(
+    (sum, item) => sum + getItemSubtotal(item),
+    0
+  );
+
+  const total =
+    Number(cart?.total || 0) > 0 ? Number(cart.total) : totalFromItems;
+
+  async function handleMigrateGuestCart() {
     try {
-      setLoading(true);
+      await migrateGuestCartToUserCart();
+      await loadCart();
 
-      if (isLogged) {
-        try {
-          const data = await getMyCartItems();
-          setItems(Array.isArray(data) ? data : []);
-        } catch (err) {
-          if (err.message?.toLowerCase().includes("carrinho não encontrado")) {
-            await createCart();
-            const data = await getMyCartItems();
-            setItems(Array.isArray(data) ? data : []);
-          } else {
-            throw err;
-          }
-        }
-      } else {
-        setItems(Array.isArray(cart) ? cart : []);
-      }
+      setGuestCartHandled(true);
+      showSuccess("Itens do carrinho visitante adicionados ao seu carrinho.");
     } catch (err) {
-      showError(err.message || "Erro ao carregar carrinho.");
-    } finally {
-      setLoading(false);
+      showError(err.message || "Erro ao adicionar carrinho visitante.");
     }
   }
 
-  useEffect(() => {
-    loadCartItems();
-  }, [cart]);
-
-  function getItemId(item) {
-    return item.cartItemId || item.id;
+  function handleDiscardGuestCart() {
+    clearGuestCart();
+    setGuestCartHandled(true);
+    showSuccess("Carrinho visitante descartado.");
   }
 
-  function getProductId(item) {
-    return item.productId || item.id;
-  }
+  async function handleUpdateQuantity(item, newQty) {
+    const quantity = Number(newQty);
 
-  function getItemName(item) {
-    return item.productName || item.name || `Produto #${getProductId(item)}`;
-  }
-
-  function getItemPrice(item) {
-    return Number(item.unitPrice || item.price || 0);
-  }
-
-  function getItemQuantity(item) {
-    return Number(item.quantity || 1);
-  }
-
-  function getItemSubtotal(item) {
-    return Number(
-      item.subTotal ||
-        item.subtotal ||
-        getItemPrice(item) * getItemQuantity(item)
-    );
-  }
-
-  async function handleUpdateQuantity(item, newQuantity) {
-    const quantity = Number(newQuantity);
     if (quantity < 1) return;
 
     const itemId = getItemId(item);
@@ -93,13 +95,8 @@ export function ClientCart() {
 
     try {
       setUpdatingId(itemId);
-
-      if (isLogged) {
-        await updateCartItem(itemId, productId, quantity);
-        await loadCartItems();
-      } else {
-        updateQuantity(productId, quantity);
-      }
+      await updateQuantity(productId, quantity);
+      await loadCart();
     } catch (err) {
       showError(err.message || "Erro ao atualizar quantidade.");
     } finally {
@@ -113,15 +110,8 @@ export function ClientCart() {
 
     try {
       setRemovingId(itemId);
-
-      if (isLogged) {
-        await removeCartItem(itemId);
-        await loadCartItems();
-      } else {
-        removeFromCart(productId);
-      }
-
-      showSuccess("Produto removido do carrinho.");
+      await removeFromCart(productId);
+      await loadCart();
     } catch (err) {
       showError(err.message || "Erro ao remover produto.");
     } finally {
@@ -129,168 +119,225 @@ export function ClientCart() {
     }
   }
 
-  async function handleFinishOrder() {
-    if (!isLogged) {
-      showError("Faça login para finalizar o pedido.");
-      return;
-    }
-
-    try {
-      setFinishing(true);
-      await createOrderFromCart();
-      await loadCartItems();
-      showSuccess("Pedido criado com sucesso.");
-    } catch (err) {
-      showError(err.message || "Erro ao finalizar pedido.");
-    } finally {
-      setFinishing(false);
-    }
+ async function handleFinishOrder() {
+  if (!isLogged) {
+    navigate("/auth/identify", {
+      state: { from: "/cart" },
+    });
+    return;
   }
 
-  const total = items.reduce((sum, item) => sum + getItemSubtotal(item), 0);
+  try {
+    setFinishing(true);
 
-  const filteredItems = items.filter((item) => {
-    const term = search.toLowerCase().trim();
-    if (!term) return true;
-    return getItemName(item).toLowerCase().includes(term);
-  });
+    await createOrderFromCart();
+
+    showSuccess("Pedido criado com sucesso!");
+
+    await loadCart(); // limpa/atualiza carrinho
+
+  
+    navigate("/client/orders");
+
+  } catch (err) {
+    showError(err.message || "Erro ao finalizar pedido.");
+  } finally {
+    setFinishing(false);
+  }
+}
+
+  const filteredItems = search.trim()
+    ? items.filter((item) =>
+        getItemName(item).toLowerCase().includes(search.toLowerCase().trim())
+      )
+    : items;
 
   return (
-    <>
-      <StoreHeader />
+    <main className="cart-page">
+      <section className="cart-hero">
+        <div className="cart-hero__ornament"></div>
 
-      <main className="client-page">
-        <section className="client-hero">
-          <div className="client-hero-inner">
-            <h1>Meu carrinho</h1>
-            <p>Confira os produtos adicionados antes de finalizar o pedido.</p>
-          </div>
-        </section>
+        <h1>Minha Sacola</h1>
+        <p>Confira os produtos antes de finalizar o pedido.</p>
+      </section>
 
-        <section className="orders-container">
-          <div className="orders-header">
-            <h2>Produtos no carrinho</h2>
+      <section className="cart-section">
+        <div className="cart-section__header">
+          <h2>Produtos selecionados</h2>
 
-            <div className="orders-actions">
-              <input
-                type="text"
-                placeholder="Buscar produto..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+          <input
+            type="text"
+            placeholder="Buscar produto..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="cart-search"
+          />
+        </div>
+
+        {showGuestWarning && (
+          <div className="cart-guest-warning">
+            <p>
+              Você possui itens no carrinho de visitante. Deseja adicioná-los ao
+              seu carrinho da conta?
+            </p>
+
+            <div className="cart-guest-actions">
+              <button
+                type="button"
+                className="cart-btn-main"
+                onClick={handleMigrateGuestCart}
+              >
+                Adicionar a minha sacola
+              </button>
+
+              <button
+                type="button"
+                className="cart-btn-outline"
+                onClick={handleDiscardGuestCart}
+              >
+                Descartar sacola visitante
+              </button>
             </div>
           </div>
+        )}
 
-          {loading ? (
-            <div className="empty-box">
-              <h3>Carregando carrinho...</h3>
+        {loadingCart ? (
+          <div className="cart-empty-box">
+            <p>Carregando sacola...</p>
+          </div>
+        ) : !items.length ? (
+          <div className="cart-empty-box">
+            <span className="cart-empty-box__icon">✦</span>
+            <p>Sua sacola está vazia.</p>
+
+            <button
+              className="cart-btn-outline"
+              onClick={() => navigate("/products")}
+            >
+              Ver coleção
+            </button>
+          </div>
+        ) : !filteredItems.length ? (
+          <div className="cart-empty-box">
+            <p>Nenhum produto encontrado.</p>
+          </div>
+        ) : (
+          <div className="cart-layout">
+            <div className="cart-items">
+              <button
+                className="cart-btn-outline cart-continue"
+                onClick={() => navigate("/products")}
+              >
+                ← Continuar comprando
+              </button>
+
+              {filteredItems.map((item) => {
+                const itemId = getItemId(item);
+
+                return (
+                  <article className="cart-card" key={itemId}>
+                    <div className="cart-card__info">
+                      <h3 className="cart-card__name">{getItemName(item)}</h3>
+
+                      <p className="cart-card__unit">
+                        {formatPrice(getItemPrice(item))} / unidade
+                      </p>
+                    </div>
+
+                    <div className="cart-card__footer">
+                      <div className="cart-qty">
+                        <button
+                          className="cart-qty__btn"
+                          disabled={
+                            getItemQuantity(item) <= 1 ||
+                            updatingId === itemId
+                          }
+                          onClick={() =>
+                            handleUpdateQuantity(
+                              item,
+                              getItemQuantity(item) - 1
+                            )
+                          }
+                        >
+                          −
+                        </button>
+
+                        <span className="cart-qty__value">
+                          {getItemQuantity(item)}
+                        </span>
+
+                        <button
+                          className="cart-qty__btn"
+                          disabled={updatingId === itemId}
+                          onClick={() =>
+                            handleUpdateQuantity(
+                              item,
+                              getItemQuantity(item) + 1
+                            )
+                          }
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <strong className="cart-card__subtotal">
+                        {formatPrice(getItemSubtotal(item))}
+                      </strong>
+
+                      <button
+                        className="cart-card__remove"
+                        disabled={removingId === itemId}
+                        onClick={() => handleRemoveItem(item)}
+                      >
+                        {removingId === itemId ? "Removendo..." : "Remover"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
-          ) : !items.length ? (
-            <div className="empty-box">
-              <h3>Seu carrinho está vazio.</h3>
-            </div>
-          ) : !filteredItems.length ? (
-            <div className="empty-box">
-              <h3>Nenhum produto encontrado.</h3>
-            </div>
-          ) : (
-            <div className="cart-layout">
-              <div className="cart-items">
-                <div className="orders-list">
-                  {filteredItems.map((item) => {
-                    const itemId = getItemId(item);
 
-                    return (
-                      <article className="order-card" key={itemId}>
-                        <div className="order-card-header">
-                          <div>
-                            <h3>{getItemName(item)}</h3>
+            <aside className="cart-summary">
+              <h3 className="cart-summary__title">Resumo</h3>
 
-                            <p>
-                              {getItemQuantity(item)} unidade(s) —{" "}
-                              {formatPrice(getItemPrice(item))}
-                            </p>
-                          </div>
+              <div className="cart-summary__rows">
+                <div className="cart-summary__row">
+                  <span>Subtotal: </span>
+                  <strong>{formatPrice(total)}</strong>
+                </div>
 
-                          <strong>{formatPrice(getItemSubtotal(item))}</strong>
-                        </div>
-
-                        <div className="cart-card-footer">
-                          <div className="cart-quantity-control">
-                            <button
-                              disabled={
-                                getItemQuantity(item) <= 1 ||
-                                updatingId === itemId
-                              }
-                              onClick={() =>
-                                handleUpdateQuantity(
-                                  item,
-                                  getItemQuantity(item) - 1
-                                )
-                              }
-                            >
-                              -
-                            </button>
-
-                            <span>{getItemQuantity(item)}</span>
-
-                            <button
-                              disabled={updatingId === itemId}
-                              onClick={() =>
-                                handleUpdateQuantity(
-                                  item,
-                                  getItemQuantity(item) + 1
-                                )
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <button
-                            className="btn-outline"
-                            disabled={removingId === itemId}
-                            onClick={() => handleRemoveItem(item)}
-                          >
-                            {removingId === itemId ? "Removendo..." : "Remover"}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
+                <div className="cart-summary__row">
+                  <span>Frete: </span>
+                  <strong>Grátis</strong>
                 </div>
               </div>
 
-              <aside className="cart-summary">
-                <h3>Resumo do pedido</h3>
+              <div className="cart-summary__total">
+                <span>Total: </span>
+                <strong>{formatPrice(total)}</strong>
+              </div>
 
-                <div className="summary-row">
-                  <span>Subtotal</span>
-                  <strong>{formatPrice(total)}</strong>
-                </div>
+              <button
+                className="cart-btn-main"
+                disabled={finishing}
+                onClick={handleFinishOrder}
+              >
+                {finishing
+                  ? "Finalizando..."
+                  : isLogged
+                  ? "Finalizar pedido"
+                  : "Entrar para finalizar"}
+              </button>
 
-                <div className="summary-row">
-                  <span>Frete</span>
-                  <strong>Grátis</strong>
-                </div>
-
-                <div className="summary-total">
-                  <span>Total</span>
-                  <strong>{formatPrice(total)}</strong>
-                </div>
-
-                <button
-                  className="btn-main"
-                  disabled={finishing}
-                  onClick={handleFinishOrder}
-                >
-                  {finishing ? "Finalizando..." : "Finalizar pedido"}
-                </button>
-              </aside>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
+              {!isLogged && (
+                <p className="cart-summary__hint">
+                  Sua sacola será salva como visitante até você entrar.
+                </p>
+              )}
+            </aside>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

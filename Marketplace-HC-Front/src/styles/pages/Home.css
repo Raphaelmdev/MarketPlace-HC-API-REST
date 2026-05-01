@@ -88,7 +88,7 @@ body {
 .hero-ornament i {
   font-style: normal;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 0.75rem;
+  font-size: 0.90rem;
   letter-spacing: 0.35em;
   text-transform: uppercase;
   color: var(--dourado);
@@ -146,7 +146,7 @@ body {
   text-align: center;
 }
 
-/* Botão */
+/* ── Botão base ── */
 .btn-outline {
   padding: 0.75rem 2.4rem;
   font-family: 'Cinzel', serif;
@@ -157,56 +157,47 @@ body {
   border: 2px solid var(--dourado);
   background: transparent;
   cursor: pointer;
-  transition: 0.3s;
+  /* ✅ transition SEM "opacity" e SEM "transform" para não conflitar com keyframes */
+  transition: color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   text-decoration: none;
 }
 
+/* ── Botão principal (hero) ── */
 .main-btn {
   font-weight: 700;
   letter-spacing: 0.35em;
-  border-width: 1.5px;
   padding: 0.9rem 3rem;
   border: 0.18rem solid var(--dourado-claro);
   opacity: 0;
+  /* ✅ transform inicial removido — a keyframe define tudo */
   animation: vitrineEnter 1s ease 1s forwards, vitrineGlow 2.8s ease-in-out 2s infinite;
-}
-
-.top-actions .btn-outline {
-  min-width: 190px;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 0.35em;
-  border-width: 1.5px;
-  border: 0.16rem solid var(--dourado-claro);
-  margin-left: 0.7rem;
-  opacity: 0;
-  transform: translateY(-10px);
-  animation: topFadeIn 0.7s ease 0.8s forwards, topGlow 2.0s ease-in-out 2s infinite;
-  transition: all 0.25s ease;
-}
-
-.top-actions .btn-outline:hover {
-  transform: translateY(-5px);
-  border-color: var(--dourado-claro);
-  color: rgba(20, 4, 10, 0.85);
-  box-shadow: 0 6px 24px rgba(184, 146, 42, 0.2);
-}
-
-.btn-outline::before {
-  transform: scaleX(0);
-}
-
-.btn-outline:hover::before {
-  transform: scaleX(1);
-}
-
-.main-btn {
-  transition: all 0.3s ease;
 }
 
 .main-btn:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 8px 20px rgba(184, 146, 42, 0.3);
+}
+
+/* ── Botões do topo ── */
+.top-actions .btn-outline {
+  min-width: 190px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  border: 0.16rem solid var(--dourado-claro);
+  margin-left: 0.7rem;
+  opacity: 0;
+  /* ✅ transform estático removido — conflitava com topFadeIn */
+  animation: topFadeIn 0.7s ease 0.8s forwards, topGlow 2.0s ease-in-out 2s infinite;
+  /* ✅ transition restrito: não animamos opacity/transform aqui */
+  transition: color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.top-actions .btn-outline:hover {
+  transform: translateY(-5px);
+  border-color: var(--dourado-claro);
+  color: var(--dourado-claro);
+  box-shadow: 0 6px 24px rgba(184, 146, 42, 0.2);
 }
 
 /* ══════════════════════════════
@@ -221,13 +212,14 @@ body {
 }
 
 .social .btn-outline {
-  transition: all 0.25s ease;
+  transition: color 0.25s ease, border-color 0.25s ease,
+              box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .social .btn-outline:hover {
   transform: translateY(-2px);
   border-color: var(--dourado-claro);
-  color: rgba(20, 4, 10, 0.85);
+  color: var(--dourado-claro);
   box-shadow: 0 6px 16px rgba(184, 146, 42, 0.2);
 }
 
@@ -253,15 +245,13 @@ body {
 .social .gold-rule { margin-bottom: 2.5rem; }
 
 /* ══════════════════════════════
-   DEVS  ← CORRIGIDO
+   DEVS
 ══════════════════════════════ */
 .devs {
   background: linear-gradient(135deg, #1d080d 0%, #1d080d 100%);
-  padding: 5rem 2rem 6rem;  /* padding-top menor pois o título já é inline agora */
+  padding: 5rem 2rem 6rem;
   position: relative;
   width: 100%;
-
-  /* ✅ flex em coluna para empilhar título + grid */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -278,7 +268,6 @@ body {
   background: linear-gradient(90deg, transparent, var(--dourado), transparent);
 }
 
-/* ✅ Título volta ao fluxo normal (sem position: absolute) */
 .devs-title {
   font-family: 'Cinzel', serif;
   font-size: 1.2rem;
@@ -301,7 +290,6 @@ body {
   background: var(--dourado);
 }
 
-/* ✅ Grid que organiza os cards lado a lado */
 .dev-cards-grid {
   display: flex;
   flex-wrap: wrap;
@@ -316,7 +304,10 @@ body {
   border: 1px solid rgba(184, 146, 42, 0.25);
   padding: 3rem 2rem;
   text-align: center;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -392,7 +383,8 @@ body {
   color: var(--dourado);
   text-decoration: none;
   padding: 0.5rem 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              letter-spacing 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
@@ -464,7 +456,7 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1); /* ✅ valor 0 explícito */
   }
 }
 
@@ -475,26 +467,18 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0); /* ✅ unidade corrigida */
   }
 }
 
 @keyframes vitrineGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(184, 146, 42, 0);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(184, 146, 42, 0.35);
-  }
+  0%, 100% { box-shadow: 0 0 0 rgba(184, 146, 42, 0); }
+  50%       { box-shadow: 0 0 25px rgba(184, 146, 42, 0.35); }
 }
 
 @keyframes topGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(184, 146, 42, 0);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(184, 146, 42, 0.35);
-  }
+  0%, 100% { box-shadow: 0 0 0 rgba(184, 146, 42, 0); }
+  50%       { box-shadow: 0 0 10px rgba(184, 146, 42, 0.35); }
 }
 
 /* ══════════════════════════════

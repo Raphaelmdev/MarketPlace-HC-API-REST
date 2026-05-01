@@ -1,94 +1,110 @@
-.admin-header {
-  width: 100%;
-  background: var(--vinho-escuro);
-  color: var(--branco-puro);
-  font-family: "Raleway", sans-serif;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid rgba(184, 146, 42, 0.25);
+/* =========================================================
+   🎨 CORES DO ADMIN
+   ========================================================= */
+
+:root {
+  --admin-bg: #180004;
+  --admin-bg-hover: #3a0f14;
+  --admin-primary: #e61a1a;
+  --admin-primary-soft: rgba(229, 154, 154, 0.08);
+  --admin-border: rgba(194, 70, 70, 0.25);
+  --admin-text: rgba(255, 220, 220, 0.65);
 }
 
-.admin-header-top {
+/* =========================================================
+   🧱 HEADER BASE
+   ========================================================= */
+
+.admin-header {
+  background: var(--admin-bg);
+}
+
+.admin-header .admin-header-top {
   display: flex;
   align-items: center;
-  padding: 12px 25px;
-  gap: 34px;
+  height: 72px;
+  padding: 0 3rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  gap: 4.5rem;
 }
+
+/* =========================================================
+   🧵 LOGO
+   ========================================================= */
 
 .admin-logo {
   display: flex;
   align-items: center;
-  height: 58px;
-  overflow: visible;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .admin-logo img {
-  width: auto;
-  object-fit: contain;
   height: 90px;
-  margin-top: 4px;
+  object-fit: contain;
 }
+
+/* =========================================================
+   🧭 NAV
+   ========================================================= */
 
 .admin-header-nav {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-left: auto;
+  margin-left: 1rem;
 }
 
 .admin-header-nav a {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 22px;
-  border-left: 1px solid rgba(184, 146, 42, 0.28);
-  color: var(--branco-puro);
+  gap: 7px;
+  padding: 10px 18px;
+  border-left: 1px solid var(--admin-border);
+  color: var(--admin-text);
   text-decoration: none;
   font-family: "Cinzel", serif;
-  font-size: 0.86rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  transition: 0.2s ease;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 .admin-header-nav a:last-child {
-  border-right: 1px solid rgba(184, 146, 42, 0.28);
+  border-right: 1px solid var(--admin-border);
 }
 
 .admin-header-nav a svg {
-  font-size: 1.55rem;
-  color: var(--branco-puro);
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  color: inherit;
 }
 
 .admin-header-nav a:hover,
 .admin-header-nav a.active {
-  color: var(--dourado-claro);
-  background: transparent;
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
 }
 
-.admin-header-nav a:hover svg,
-.admin-header-nav a.active svg {
-  color: var(--branco-puro);
-}
+/* =========================================================
+   👤 ACCOUNT
+   ========================================================= */
 
 .admin-account {
+  margin-left: auto;
   position: relative;
-  padding: 10px 0 10px 22px;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
   cursor: pointer;
-  flex-shrink: 0;
+  transition: border-color 0.25s ease;
+  margin-left: -201px;
 }
 
-.admin-account::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  height: 18px;
+.admin-account:hover {
+  border-color: var(--admin-border);
 }
 
 .admin-account-label {
@@ -97,104 +113,134 @@
   gap: 8px;
 }
 
-.admin-account-label svg {
-  font-size: 1.55rem;
-  color: var(--branco-puro);
+.admin-account-label > svg {
+  font-size: 1.5rem;
+  color: var(--admin-text);
+  flex-shrink: 0;
+}
+
+.admin-account-label div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
 }
 
 .admin-account-label span {
-  font-size: 12px;
-  color: rgba(237, 232, 223, 0.7);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--admin-text);
+  white-space: nowrap; /* 👈 fix: impede quebra de "Área administrativa" */
 }
 
 .admin-account-label strong {
-  display: block;
-  color: var(--branco-puro);
-  font-size: 0.9rem;
   font-family: "Cinzel", serif;
-  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--admin-primary);
+  white-space: nowrap;
 }
 
-.admin-account:hover svg,
-.admin-account:hover strong {
-  color: var(--dourado-claro);
-}
+/* =========================================================
+   📦 DROPDOWN
+   ========================================================= */
 
 .admin-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 10px);
   right: 0;
-  margin-top: 6px;
   width: 180px;
-  background: var(--branco-puro);
-  color: #1f1712;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
   padding: 10px;
   z-index: 200;
-  animation: adminFadeIn 0.15s ease;
-  border: 1px solid rgba(184, 146, 42, 0.45);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.15s ease;
 }
 
 .admin-dropdown button {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: 0.2s ease;
-  color: #1f1712;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  color: var(--admin-text);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
 }
 
 .admin-dropdown button:hover {
-  background: rgba(184, 146, 42, 0.12);
-  border-color: var(--dourado);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
 }
 
-@keyframes adminFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
+/* =========================================================
+   🔁 VARIANTES
+   ========================================================= */
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.admin-header-simple .admin-header-top {
+  justify-content: space-between;
 }
 
-@media (max-width: 1050px) {
-  .admin-header-top {
-    gap: 14px;
-    padding: 10px 14px;
-  }
+.admin-header-nav-mode .admin-account {
+  margin-left: auto;
+}
 
-  .admin-logo {
-    height: 48px;
-  }
+/* =========================================================
+   📱 RESPONSIVO
+   ========================================================= */
 
-  .admin-logo img {
-    height: 68px;
-  }
-
-  .admin-header-nav {
-    overflow-x: auto;
+@media (max-width: 1200px) {
+  .admin-header .admin-header-top {
+    padding: 0 1.5rem;
+    gap: 1rem;
   }
 
   .admin-header-nav a {
-    font-size: 0.72rem;
-    padding: 8px 12px;
+    padding: 10px 12px;
+    font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-header-nav {
+    overflow-x: auto;
+    max-width: 70vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-header .admin-header-top {
+    padding: 0 1rem;
+    gap: 0.5rem;
   }
 
-  .admin-account-label span {
+  .admin-header-nav {
+    margin-left: 1rem;
+    max-width: 72vw;
+  }
+
+  .admin-header-nav a {
+    padding: 8px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-header-nav {
     display: none;
   }
+}
 
-  .admin-account-label strong {
-    font-size: 0.78rem;
-  }
+/* =========================================================
+   🎬 ANIMAÇÃO
+   ========================================================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

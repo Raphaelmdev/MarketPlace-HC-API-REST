@@ -1,4 +1,3 @@
-import { AdminHeader } from "@/components/AdminHeader";
 import { useNavigate } from "react-router-dom";
 import {
   MdInventory,
@@ -6,7 +5,8 @@ import {
   MdPeople,
   MdReceiptLong,
   MdAdminPanelSettings,
-  MdPerson // 🔥 NOVO
+  MdPerson,
+  MdStorefront
 } from "react-icons/md";
 import "@/styles/pages/AdminPages.css";
 
@@ -15,7 +15,6 @@ export function AdminArea() {
 
   return (
     <>
-      <AdminHeader />
 
       <main className="admin-page">
         <section className="admin-hero">
@@ -91,8 +90,17 @@ export function AdminArea() {
               <p>Acompanhar e atualizar pedidos.</p>
             </div>
           </button>
-
-        </section>
+            <button
+                className="admin-card admin-store-card"
+                onClick={() => navigate("/products")}
+              >
+                <MdStorefront />
+                <div>
+                  <h3>Visualizar vitrine</h3>
+                  <p>Visualizar como os clientes enxergam os produtos.</p>
+                </div>
+              </button>
+          </section>
       </main>
     </>
   );

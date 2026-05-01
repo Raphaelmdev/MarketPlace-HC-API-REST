@@ -1,6 +1,5 @@
-import { StoreHeader } from "@/components/StoreHeader";
 import { useNavigate } from "react-router-dom";
-import { MdReceiptLong, MdPerson, MdHome } from "react-icons/md";
+import { MdReceiptLong, MdPerson, MdHome, MdInventory, MdShoppingBag } from "react-icons/md";
 import { FaHeart } from "react-icons/fa";
 import "@/styles/pages/ClientPages.css";
 
@@ -9,7 +8,6 @@ export function ClientAccount() {
 
   return (
     <>
-      <StoreHeader />
 
       <main className="client-page">
         <section className="client-hero">
@@ -48,6 +46,19 @@ export function ClientAccount() {
                 <p>Consultar e atualizar seu endereço de entrega.</p>
               </div>
             </button>
+              <button
+                  className="account-card"
+                  onClick={() => navigate("/cart")}
+                >
+                  <div className="account-card-icon">
+                    <MdShoppingBag />
+                  </div>
+
+                  <div>
+                    <h3>Seu carrinho</h3>
+                    <p>Ver itens e finalizar sua compra.</p>
+                  </div>
+                </button>
 
             <button
               className="account-card"
@@ -70,12 +81,24 @@ export function ClientAccount() {
               <div className="account-card-icon">
                 <FaHeart />
               </div>
-
               <div>
                 <h3>Lista de desejos</h3>
                 <p>Produtos salvos para comprar futuramente.</p>
               </div>
             </button>
+            <button
+            className="account-card "
+            onClick={() => navigate("/products")}
+          >
+            <div className="account-card-icon">
+              <MdInventory />
+            </div>
+
+            <div>
+              <h3>Ver Coleção</h3>
+              <p>Explorar a vitrine e encontrar novos itens.</p>
+            </div>
+          </button>
           </div>
         </section>
       </main>

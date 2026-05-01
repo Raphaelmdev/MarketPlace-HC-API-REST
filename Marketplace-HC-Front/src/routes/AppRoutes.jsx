@@ -1,37 +1,77 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { PublicRoute } from "@/routes/PublicRoute";
-import { ROLES } from "@/constants/roles";
+import { ROLES } from "@/utils/roles";
+import { getUser } from "@/utils/auth";
 
-/* ROTAS PÚBLICAS */
+/* HEADERS */
+import { ClientHeader } from "@/components/ClientHeader";
+import { AdminHeader } from "@/components/AdminHeader";
+import { StoreHeader } from "@/components/StoreHeader";
+
+/* PÚBLICAS */
+import { Home } from "@/pages/public/Home";
 import { Login } from "@/pages/public/Login";
 import { Register } from "@/pages/public/Register";
-import { Home } from "@/pages/public/Home";
 import { ForgotPassword } from "@/pages/public/ForgotPassword";
 import { ResetPassword } from "@/pages/public/ResetPassword";
 import { IdentifyAccount } from "@/pages/public/IdentifyAccount";
+
+/* LOJA */
 import { Products } from "@/pages/shop/Products";
 import { ProductDetail } from "@/pages/shop/ProductDetail";
+import { Cart } from "@/pages/shop/Cart";
 
-
-/* ROTAS DE LOJA */
-import { ClientCart } from "@/pages/shop/Cart";
-
-/* ROTAS DO CLIENTE */
+/* CLIENTE */
 import { ClientAccount } from "@/pages/client/ClientAccount";
-import { ClientOrders } from "@/pages/client/ClientOrders";
 import { ClientProfile } from "@/pages/client/ClientProfile";
 import { ClientAddress } from "@/pages/client/ClientAddress";
+import { ClientOrders } from "@/pages/client/ClientOrders";
 import { ClientWishlist } from "@/pages/client/ClientWishlist";
 
-/* ROTAS ADMIN */
-import { AdminProfile } from "@/pages/admin/AdminProfile";
+/* ADMIN */
 import { AdminArea } from "@/pages/admin/AdminArea";
+import { AdminProfile } from "@/pages/admin/AdminProfile";
 import { AdminProducts } from "@/pages/admin/AdminProducts";
 import { AdminCategories } from "@/pages/admin/AdminCategories";
 import { AdminUsers } from "@/pages/admin/AdminUsers";
 import { AdminOrders } from "@/pages/admin/AdminOrders";
 import { AdminCreateUser } from "@/pages/admin/AdminCreateAdmin";
+
+function ClientLayout() {
+  return (
+    <>
+      <ClientHeader />
+      <Outlet />
+    </>
+  );
+}
+
+function AdminLayout() {
+  return (
+    <>
+      <AdminHeader />
+      <Outlet />
+    </>
+  );
+}
+
+function CartLayout() {
+  const user = getUser();
+
+  if (user?.role === ROLES.ADMIN) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  const isClient = user?.role === ROLES.CLIENT;
+
+  return (
+    <>
+      {isClient ? <ClientHeader /> : <StoreHeader />}
+      <Cart />
+    </>
+  );
+}
 
 export function AppRoutes() {
   return (
@@ -40,142 +80,49 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/home" replace />} />
 
         <Route path="/home" element={<Home />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/cart" element={<CartLayout />} />
 
-       <Route path="/products" element={<Products />} />
-
-       <Route path="/products/:id" element={<ProductDetail />} />
-
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          }
-        />
-
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/auth/identify" element={<IdentifyAccount />} />
-
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
-        <Route path="/cart" element={<ClientCart />} />
 
         <Route
           path="/client"
           element={
             <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
-              <ClientAccount />
+              <ClientLayout />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/client/orders"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
-              <ClientOrders />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/client/profile"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
-              <ClientProfile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/client/address"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
-              <ClientAddress />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/client/wishlist"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
-              <ClientWishlist />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<ClientAccount />} />
+          <Route path="profile" element={<ClientProfile />} />
+          <Route path="address" element={<ClientAddress />} />
+          <Route path="orders" element={<ClientOrders />} />
+          <Route path="wishlist" element={<ClientWishlist />} />
+        </Route>
 
         <Route
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminArea />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-           path="/admin/profile"
-            element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminProfile />
-            </ProtectedRoute>
-         }
-       />
-        <Route
-          path="/admin/products"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminProducts />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<AdminArea />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="create-admin" element={<AdminCreateUser />} />
+        </Route>
 
-        <Route
-          path="/admin/categories"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminCategories />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminUsers />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/orders"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminOrders />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/create-admin"
-          element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-              <AdminCreateUser />
-            </ProtectedRoute>
-          }
-        />
-
+        <Route path="/unauthorized" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>

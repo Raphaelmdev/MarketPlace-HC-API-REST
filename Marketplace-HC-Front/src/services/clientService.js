@@ -3,10 +3,15 @@ const API_URL = import.meta.env.VITE_API_URL;
 function getHeaders() {
   const token = localStorage.getItem("token");
 
-  return {
+  const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
 }
 
 async function handleResponse(response) {
@@ -34,7 +39,12 @@ export async function getProducts(filters = {}) {
   if (filters.maxPrice) params.append("maxPrice", filters.maxPrice);
   if (filters.sort) params.append("sort", filters.sort);
 
-  const response = await fetch(`${API_URL}/products/filter?${params}`);
+  const query = params.toString();
+  const url = query
+    ? `${API_URL}/products/filter?${query}`
+    : `${API_URL}/products/filter`;
+
+  const response = await fetch(url);
   return handleResponse(response);
 }
 
@@ -56,7 +66,7 @@ export async function getMyProfile() {
 }
 
 export async function updateMyProfile(data) {
-  const response = await fetch(`${API_URL}/users/me`, {
+  const response = await fetch(`${API_URL}/users/me/profile`, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(data),
@@ -179,5 +189,3 @@ export async function cancelMyOrder(orderId) {
 
   return handleResponse(response);
 }
-
-

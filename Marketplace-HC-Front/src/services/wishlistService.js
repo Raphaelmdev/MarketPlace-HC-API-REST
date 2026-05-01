@@ -5,28 +5,18 @@ function getHeaders() {
 
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
-}
-
-async function handleResponse(response) {
-  if (response.status === 204) return null;
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(data?.message || data?.error || "Erro na requisição.");
-  }
-
-  return data;
 }
 
 export async function getWishlist() {
   const response = await fetch(`${API_URL}/client/wishlist`, {
-    headers: getHeaders()
+    headers: getHeaders(),
   });
 
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Erro ao buscar wishlist");
+
+  return response.json();
 }
 
 export async function addToWishlist(productId) {
@@ -34,11 +24,11 @@ export async function addToWishlist(productId) {
     `${API_URL}/client/wishlist/items/${productId}`,
     {
       method: "POST",
-      headers: getHeaders()
+      headers: getHeaders(),
     }
   );
 
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Erro ao adicionar");
 }
 
 export async function removeFromWishlist(productId) {
@@ -46,9 +36,9 @@ export async function removeFromWishlist(productId) {
     `${API_URL}/client/wishlist/items/${productId}`,
     {
       method: "DELETE",
-      headers: getHeaders()
+      headers: getHeaders(),
     }
   );
 
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Erro ao remover");
 }

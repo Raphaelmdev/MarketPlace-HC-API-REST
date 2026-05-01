@@ -11,17 +11,18 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface CartItemMapper {
 
-        @Mapping(target = "id", ignore = true)
-        @Mapping(target = "cart", ignore = true)
-        @Mapping(target = "product", ignore = true)
-        @Mapping(target = "unitPrice", ignore = true)
-        @Mapping(target = "subTotal", ignore = true)
-        CartItem toEntity(CartItemRequestDTO dto);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "cart", ignore = true)
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "unitPrice", ignore = true)
+    @Mapping(target = "subTotal", ignore = true)
+    CartItem toEntity(CartItemRequestDTO dto);
 
-        @Mapping(source = "product.id", target = "productId")
-        @Mapping(source = "product.name", target = "productName")
-        CartItemResponseDTO toResponse(CartItem cartItem);
+    @Mapping(source = "product.id", target = "productId")
+    @Mapping(source = "product.name", target = "productName")
+    @Mapping(source = "subTotal", target = "subTotal")
+    @Mapping(source = "unitPrice", target = "unitPrice")
+    CartItemResponseDTO toResponse(CartItem cartItem);
 
-        List<CartItemResponseDTO> toResponseList(List<CartItem> cartItems);
+    List<CartItemResponseDTO> toResponseList(List<CartItem> cartItems);
 }
-

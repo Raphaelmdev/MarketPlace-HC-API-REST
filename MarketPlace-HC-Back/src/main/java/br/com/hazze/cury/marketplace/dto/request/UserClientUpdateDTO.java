@@ -9,7 +9,7 @@ public record UserClientUpdateDTO(
 
         @Schema(
                 description = "Nome completo do cliente.",
-                example = "Raphael Martins",
+                example = "Seu Nome",
                 requiredMode = REQUIRED
         )
         @NotBlank(message = "O nome é obrigatório.")
@@ -18,7 +18,7 @@ public record UserClientUpdateDTO(
 
         @Schema(
                 description = "E-mail do cliente.",
-                example = "raphael@email.com",
+                example = "seuemail@email.com",
                 requiredMode = REQUIRED
         )
         @NotBlank(message = "O e-mail é obrigatório.")
@@ -27,19 +27,17 @@ public record UserClientUpdateDTO(
         String email,
 
         @Schema(
-                description = "Telefone do cliente (somente números).",
+                description = "Telefone do cliente somente com números.",
                 example = "11999999999"
         )
-        @Pattern(regexp = "^\\d{10,11}$", message = "O telefone deve conter 10 ou 11 números.")
+        @Pattern(regexp = "^$|^\\d{10,11}$", message = "O telefone deve conter 10 ou 11 números.")
         String phone,
 
         @Schema(
-                description = "CPF do cliente (somente números).",
-                example = "12345678901",
-                requiredMode = REQUIRED
+                description = "Nova senha do cliente. Envie apenas se quiser alterar a senha.",
+                example = "abc123"
         )
-        @NotBlank(message = "O CPF é obrigatório.")
-        @Pattern(regexp = "^\\d{11}$", message = "O CPF deve conter exatamente 11 números.")
-        String cpf
+        @Size(min = 6, message = "A senha deve ter no mínimo 6 caracteres.")
+        String password
 
 ) {}

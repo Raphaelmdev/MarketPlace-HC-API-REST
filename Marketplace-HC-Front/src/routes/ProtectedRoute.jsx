@@ -3,9 +3,8 @@ import { getToken, getUser } from "@/utils/auth";
 
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const location = useLocation();
-
-  const token = getToken();
-  const user = getUser();
+  const token    = getToken();
+  const user     = getUser();
 
   if (!token || !user) {
     return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
 import {
   MdPerson,
   MdEmail,
@@ -14,7 +15,7 @@ import {
   MdMap
 } from "react-icons/md";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { register } from "@/services/authService";
+import { register, login } from "@/services/authService";
 import { useToast } from "@/context/ToastContext";
 import { formatCPF, formatPhone, formatCEP, onlyNumbers } from "@/utils/format";
 import { validateRegisterForm } from "@/utils/validations";
@@ -24,6 +25,7 @@ export function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showSuccess, showError } = useToast();
+  const { migrateGuestCartToUserCart } = useCart();
 
   const [form, setForm] = useState({
     name: "",
@@ -98,7 +100,7 @@ export function Register() {
           street: brasilData.street || "",
           neighborhood: brasilData.neighborhood || "",
           city: brasilData.city || "",
-          state: brasilData.state || ""
+          state: brasilData.state
         }));
 
         return;
@@ -204,13 +206,18 @@ export function Register() {
     try {
       await register(dataToSend);
 
+      await login({
+        email: form.email.trim(),
+        password: form.password
+      });
+
+      window.dispatchEvent(new Event("authChanged"));
+
+      await migrateGuestCartToUserCart();
+
       showSuccess("Conta criada com sucesso.", () => {
-        navigate("/login", {
-          replace: true,
-          state: {
-            email: form.email,
-            from: location.state?.from
-          }
+        navigate(location.state?.from || "/client", {
+          replace: true
         });
       });
     } catch (error) {

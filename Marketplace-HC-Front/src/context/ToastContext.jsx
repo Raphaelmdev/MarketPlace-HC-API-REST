@@ -8,6 +8,13 @@ const DEFAULT_DURATION = 1650;
 const EXIT_ANIMATION_DURATION = 300;
 const DEFAULT_REDIRECT_DELAY = 1500;
 
+const TOAST_ICONS = {
+  success: "✦",
+  error:   "✕",
+  warning: "⚠",
+  info:    "◈",
+};
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
@@ -21,10 +28,7 @@ export function ToastProvider({ children }) {
         toast.id === id ? { ...toast, leaving: true } : toast
       )
     );
-
-    setTimeout(() => {
-      removeToast(id);
-    }, EXIT_ANIMATION_DURATION);
+    setTimeout(() => removeToast(id), EXIT_ANIMATION_DURATION);
   }
 
   function showToast({
@@ -32,26 +36,13 @@ export function ToastProvider({ children }) {
     message,
     duration = DEFAULT_DURATION,
     callback,
-    redirectDelay = DEFAULT_REDIRECT_DELAY
+    redirectDelay = DEFAULT_REDIRECT_DELAY,
   }) {
     const id = Date.now() + Math.random();
 
     setToasts((prev) => {
-      const updated = [
-        ...prev,
-        {
-          id,
-          type,
-          message,
-          duration,
-          leaving: false
-        }
-      ];
-
-      if (updated.length > MAX_TOASTS) {
-        updated.shift();
-      }
-
+      const updated = [...prev, { id, type, message, duration, leaving: false }];
+      if (updated.length > MAX_TOASTS) updated.shift();
       return updated;
     });
 
@@ -64,75 +55,43 @@ export function ToastProvider({ children }) {
         );
       }, duration - EXIT_ANIMATION_DURATION);
 
-      setTimeout(() => {
-        removeToast(id);
-      }, duration);
+      setTimeout(() => removeToast(id), duration);
     }
 
     if (callback) {
-      setTimeout(() => {
-        callback();
-      }, redirectDelay);
+      setTimeout(() => callback(), redirectDelay);
     }
   }
 
   function showSuccess(message, callback, redirectDelay) {
-    showToast({
-      type: "success",
-      message,
-      callback,
-      redirectDelay
-    });
+    showToast({ type: "success", message, callback, redirectDelay });
   }
 
   function showError(message, callback, redirectDelay) {
-    showToast({
-      type: "error",
-      message,
-      callback,
-      redirectDelay
-    });
+    showToast({ type: "error", message, callback, redirectDelay });
   }
 
   function showInfo(message, callback, redirectDelay) {
-    showToast({
-      type: "info",
-      message,
-      callback,
-      redirectDelay
-    });
+    showToast({ type: "info", message, callback, redirectDelay });
   }
 
   function showWarning(message, callback, redirectDelay) {
-    showToast({
-      type: "warning",
-      message,
-      callback,
-      redirectDelay
-    });
+    showToast({ type: "warning", message, callback, redirectDelay });
   }
 
   return (
-    <ToastContext.Provider
-      value={{
-        showSuccess,
-        showError,
-        showInfo,
-        showWarning
-      }}
-    >
+    <ToastContext.Provider value={{ showSuccess, showError, showInfo, showWarning }}>
       {children}
 
       <div className="toast-container">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`toast toast-${toast.type} ${
-              toast.leaving ? "toast-out" : ""
-            }`}
+            className={`toast toast-${toast.type}${toast.leaving ? " toast-out" : ""}`}
             onClick={() => closeToast(toast.id)}
           >
-            <span>{toast.message}</span>
+            <span className="toast-icon">{TOAST_ICONS[toast.type]}</span>
+            <span className="toast-message">{toast.message}</span>
 
             {toast.duration > 0 && (
               <div
@@ -149,10 +108,6 @@ export function ToastProvider({ children }) {
 
 export function useToast() {
   const context = useContext(ToastContext);
-
-  if (!context) {
-    throw new Error("useToast deve ser usado dentro de ToastProvider.");
-  }
-
+  if (!context) throw new Error("useToast deve ser usado dentro de ToastProvider.");
   return context;
 }

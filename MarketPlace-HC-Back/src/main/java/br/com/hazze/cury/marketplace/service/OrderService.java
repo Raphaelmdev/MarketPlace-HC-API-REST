@@ -54,6 +54,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         List<OrderItem> orderItems = new ArrayList<>();
+        List<Product> productsToUpdate = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 
         for (CartItem cartItem : cartItems) {
@@ -82,9 +83,10 @@ public class OrderService {
             total = total.add(subTotal);
 
             product.setStock(product.getStock() - cartItem.getQuantity());
-            productRepository.save(product);
+            productsToUpdate.add(product);
         }
 
+        productRepository.saveAll(productsToUpdate);
         orderItemRepository.saveAll(orderItems);
 
         savedOrder.setItems(orderItems);
@@ -151,20 +153,47 @@ public class OrderService {
             throw new BusinessException("Este pedido não pode ser cancelado.");
         }
 
+        List<Product> productsToUpdate = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+
+            product.setStock(product.getStock() + item.getQuantity());
+            productsToUpdate.add(product);
+        }
+
+        productRepository.saveAll(productsToUpdate);
+
         order.setStatus(OrderStatus.CANCELED);
 
         return orderMapper.toResponse(orderRepository.save(order));
     }
 
     @Transactional
-    public OrderResponseDTO updateStatus(Long id, OrderStatusUpdateDTO dto) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado."));
+public OrderResponseDTO updateStatus(Long id, OrderStatusUpdateDTO dto) {
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado."));
 
-        order.setStatus(dto.status());
+    OrderStatus currentStatus = order.getStatus();
+    OrderStatus newStatus = dto.status();
 
-        return orderMapper.toResponse(orderRepository.save(order));
+    
+    if (currentStatus == OrderStatus.CANCELED) {
+        throw new BusinessException("Pedido cancelado não pode ter o status alterado.");
     }
+
+    if (currentStatus == OrderStatus.DELIVERED) {
+        throw new BusinessException("Pedido entregue não pode ter o status alterado.");
+    }
+
+    if (currentStatus.ordinal() > newStatus.ordinal()) {
+        throw new BusinessException("Não é permitido retroceder o status do pedido.");
+    }
+
+    order.setStatus(newStatus);
+
+    return orderMapper.toResponse(orderRepository.save(order));
+}
 
     @Transactional
     public void delete(Long id) {

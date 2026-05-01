@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { AdminHeader } from "@/components/AdminHeader";
 import {
   deleteUser,
   getUsers,
@@ -125,7 +124,6 @@ export function AdminUsers() {
   if (loading) {
     return (
       <>
-        <AdminHeader />
 
         <main className="admin-page">
           <p className="admin-loading">Carregando usuários...</p>
@@ -136,7 +134,6 @@ export function AdminUsers() {
 
   return (
     <>
-      <AdminHeader />
 
       <main className="admin-page">
         <section className="admin-hero">

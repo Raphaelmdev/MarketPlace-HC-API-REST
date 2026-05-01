@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { AdminHeader } from "@/components/AdminHeader";
 import {
   createProduct,
   deleteProduct,
@@ -40,6 +39,7 @@ export function AdminProducts() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   async function loadData() {
     try {
@@ -112,7 +112,7 @@ export function AdminProducts() {
 
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
-}
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -145,6 +145,7 @@ export function AdminProducts() {
       setSaving(true);
 
       let savedProduct;
+
       if (editingId) {
         savedProduct = await updateProduct(editingId, payload);
 
@@ -195,6 +196,10 @@ export function AdminProducts() {
       product.category?.name?.toLowerCase() ||
       "";
 
+    const productCategoryId = String(
+      product.categoryId || product.category?.id || ""
+    );
+
     const matchesSearch =
       !term ||
       name.includes(term) ||
@@ -206,211 +211,214 @@ export function AdminProducts() {
       (statusFilter === "ACTIVE" && product.active === true) ||
       (statusFilter === "INACTIVE" && product.active === false);
 
-    return matchesSearch && matchesStatus;
+    const matchesCategory =
+      !categoryFilter || productCategoryId === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   if (loading) {
     return (
-      <>
-        <AdminHeader />
-
-        <main className="admin-page">
-          <p className="admin-loading">Carregando produtos...</p>
-        </main>
-      </>
+      <main className="admin-page">
+        <p className="admin-loading">Carregando produtos...</p>
+      </main>
     );
   }
 
   return (
-    <>
-      <AdminHeader />
+    <main className="admin-page">
+      <section className="admin-hero">
+        <h1>Gerenciar Produtos</h1>
+        <p>Cadastre, edite e remova produtos da vitrine HazzeCury.</p>
+      </section>
 
-      <main className="admin-page">
-        <section className="admin-hero">
-          <h1>Gerenciar Produtos</h1>
-          <p>Cadastre, edite e remova produtos da vitrine HazzeCury.</p>
-        </section>
+      <section className="admin-panel">
+        <h2>{editingId ? "Editar produto" : "Novo produto"}</h2>
 
-        <section className="admin-panel">
-          <h2>{editingId ? "Editar produto" : "Novo produto"}</h2>
+        <form className="admin-form" onSubmit={handleSubmit}>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Nome do produto"
+          />
 
-          <form className="admin-form" onSubmit={handleSubmit}>
+          <input
+            name="price"
+            value={form.price}
+            onChange={handlePriceChange}
+            placeholder="Preço"
+            inputMode="numeric"
+          />
+
+          <input
+            name="stock"
+            type="number"
+            min="0"
+            value={form.stock}
+            onChange={handleChange}
+            placeholder="Estoque"
+          />
+
+          <select
+            name="categoryId"
+            value={form.categoryId}
+            onChange={handleChange}
+          >
+            <option value="">Selecione uma categoria</option>
+
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="active"
+            value={String(form.active)}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                active: e.target.value === "true",
+              }))
+            }
+          >
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+
+          <div className="admin-image-upload admin-full">
+            <label>Imagem do produto</label>
+
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+
+            {imagePreview && (
+              <div className="admin-image-preview">
+                <img src={imagePreview} alt="Prévia do produto" />
+              </div>
+            )}
+          </div>
+
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Descrição"
+            className="admin-full"
+          />
+
+          <div className="admin-actions admin-full">
+            <button type="submit" disabled={saving}>
+              {saving
+                ? "Salvando..."
+                : editingId
+                ? "Atualizar produto"
+                : "Cadastrar produto"}
+            </button>
+
+            {editingId && (
+              <button type="button" className="secondary" onClick={resetForm}>
+                Cancelar edição
+              </button>
+            )}
+          </div>
+        </form>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <h2>Produtos cadastrados</h2>
+
+          <div className="admin-filters">
             <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Nome do produto"
-            />
-
-            <input
-              name="price"
-              value={form.price}
-              onChange={handlePriceChange}
-              placeholder="Preço"
-              inputMode="numeric"
-            />
-
-            <input
-              name="stock"
-              type="number"
-              min="0"
-              value={form.stock}
-              onChange={handleChange}
-              placeholder="Estoque"
+              type="text"
+              placeholder="Buscar por produto, descrição ou categoria..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
 
             <select
-              name="categoryId"
-              value={form.categoryId}
-              onChange={handleChange}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              <option value="">Selecione uma categoria</option>
+              <option value="">Todas categorias</option>
 
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
+                <option key={category.id} value={String(category.id)}>
                   {category.name}
                 </option>
               ))}
             </select>
 
             <select
-              name="active"
-              value={String(form.active)}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  active: e.target.value === "true",
-                }))
-              }
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="true">Ativo</option>
-              <option value="false">Inativo</option>
+              <option value="ALL">Todos</option>
+              <option value="ACTIVE">Ativos</option>
+              <option value="INACTIVE">Inativos</option>
             </select>
-
-            <div className="admin-image-upload admin-full">
-              <label>Imagem do produto</label>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-
-              {imagePreview && (
-                <div className="admin-image-preview">
-                  <img src={imagePreview} alt="Prévia do produto" />
-                </div>
-              )}
-            </div>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Descrição"
-              className="admin-full"
-            />
-
-            <div className="admin-actions admin-full">
-              <button type="submit" disabled={saving}>
-                {saving
-                  ? "Salvando..."
-                  : editingId
-                  ? "Atualizar produto"
-                  : "Cadastrar produto"}
-              </button>
-
-              {editingId && (
-                <button type="button" className="secondary" onClick={resetForm}>
-                  Cancelar edição
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-            <h2>Produtos cadastrados</h2>
-
-            <div className="admin-filters">
-              <input
-                type="text"
-                placeholder="Buscar por produto, descrição ou categoria..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="ALL">Todos</option>
-                <option value="ACTIVE">Ativos</option>
-                <option value="INACTIVE">Inativos</option>
-              </select>
-            </div>
           </div>
+        </div>
 
-          {!filteredProducts.length ? (
-            <p className="admin-empty">
-              {search || statusFilter !== "ALL"
-                ? "Nenhum produto encontrado para essa busca."
-                : "Nenhum produto cadastrado."}
-            </p>
-          ) : (
-            <div className="admin-table-wrapper products-table-scroll">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Produto</th>
-                    <th>Preço</th>
-                    <th>Estoque</th>
-                    <th>Categoria</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
+        {!filteredProducts.length ? (
+          <p className="admin-empty">
+            {search || statusFilter !== "ALL" || categoryFilter
+              ? "Nenhum produto encontrado para essa busca."
+              : "Nenhum produto cadastrado."}
+          </p>
+        ) : (
+          <div className="admin-table-wrapper products-table-scroll">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Preço</th>
+                  <th>Estoque</th>
+                  <th>Categoria</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr key={product.id}>
-                      <td>{product.name}</td>
-                      <td>{formatPrice(product.price)}</td>
-                      <td>{product.stock ?? 0}</td>
-                      <td>
-                        {product.categoryName || product.category?.name || "-"}
-                      </td>
-                      <td>
-                        <span
-                          className={`admin-status ${
-                            product.active ? "active" : "inactive"
-                          }`}
+              <tbody>
+                {filteredProducts.map((product) => (
+                  <tr key={product.id}>
+                    <td>{product.name}</td>
+                    <td>{formatPrice(product.price)}</td>
+                    <td>{product.stock ?? 0}</td>
+                    <td>{product.categoryName || product.category?.name || "-"}</td>
+                    <td>
+                      <span
+                        className={`admin-status ${
+                          product.active ? "active" : "inactive"
+                        }`}
+                      >
+                        {product.active ? "Ativo" : "Inativo"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <button onClick={() => handleEdit(product)}>
+                          Editar
+                        </button>
+
+                        <button
+                          className="danger"
+                          onClick={() => handleDelete(product.id)}
                         >
-                          {product.active ? "Ativo" : "Inativo"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="table-actions">
-                          <button onClick={() => handleEdit(product)}>
-                            Editar
-                          </button>
-
-                          <button
-                            className="danger"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
+                          Remover
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

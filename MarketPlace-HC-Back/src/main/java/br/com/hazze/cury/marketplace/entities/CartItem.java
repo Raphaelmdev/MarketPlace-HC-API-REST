@@ -13,7 +13,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "cart_items")
-@Table(name = "cart_items")
+@Table(
+        name = "cart_items",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_cart_item_cart_product",
+                        columnNames = {"cart_id", "product_id"}
+                )
+        }
+)
 public class CartItem {
 
     @Id
@@ -36,4 +44,37 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    public void calculateSubtotal() {
+        if (unitPrice == null || quantity == null) {
+            this.subTotal = BigDecimal.ZERO;
+            return;
+        }
+
+        this.subTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+
+        if (product != null && product.getPrice() != null) {
+            this.unitPrice = product.getPrice(); 
+        }
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+        calculateSubtotal();
+    }
+
+
+    @PrePersist
+    public void prePersist() {
+        calculateSubtotal();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        calculateSubtotal();
+    }
 }

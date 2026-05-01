@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { AdminHeader } from "@/components/AdminHeader";
 import { getMyProfile, updateMyProfile } from "@/services/clientService";
 import { useToast } from "@/context/ToastContext";
+import {
+  validateName,
+  validateEmail,
+  validatePassword,
+  validateConfirmPassword,
+} from "@/utils/validations";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "@/styles/pages/AdminPages.css";
 
@@ -18,6 +23,8 @@ export function AdminProfile() {
     confirmPassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,14 +37,6 @@ export function AdminProfile() {
     if (role === "ADMIN") return "Administrador";
     if (role === "CLIENT") return "Cliente";
     return role || "Administrador";
-  }
-
-  function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  function validatePassword(password) {
-    return /^(?=.*[A-Za-z])(?=.*\d)\S{6,}$/.test(password);
   }
 
   async function loadProfile() {
@@ -61,12 +60,47 @@ export function AdminProfile() {
     }
   }
 
+  function validateForm() {
+    const newErrors = {};
+
+    const nameError = validateName(form.name);
+    if (nameError) newErrors.name = nameError;
+
+    const emailError = validateEmail(form.email);
+    if (emailError) newErrors.email = emailError;
+
+    const wantsChangePassword =
+      form.currentPassword || form.password || form.confirmPassword;
+
+    if (wantsChangePassword) {
+      if (!form.currentPassword) {
+        newErrors.currentPassword = "Informe sua senha atual.";
+      }
+
+      const passwordError = validatePassword(form.password);
+      if (passwordError) newErrors.password = passwordError;
+
+      const confirmError = validateConfirmPassword(
+        form.password,
+        form.confirmPassword
+      );
+      if (confirmError) newErrors.confirmPassword = confirmError;
+    }
+
+    return newErrors;
+  }
+
   function handleChange(event) {
     const { name, value } = event.target;
 
     setForm((prev) => ({
       ...prev,
       [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   }
 
@@ -78,6 +112,7 @@ export function AdminProfile() {
 
   function handleCancelEdit() {
     setEditing(false);
+    setErrors({});
     resetPasswordVisibility();
 
     setForm({
@@ -92,31 +127,18 @@ export function AdminProfile() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!validateEmail(form.email)) {
-      showError("Informe um e-mail válido.");
-      return;
-    }
+    const validationErrors = validateForm();
 
-    const wantsChangePassword =
-      form.currentPassword || form.password || form.confirmPassword;
-
-    if (wantsChangePassword && !form.currentPassword) {
-      showError("Informe sua senha atual para alterar a senha.");
-      return;
-    }
-
-    if (wantsChangePassword && !validatePassword(form.password)) {
-      showError("A nova senha deve ter no mínimo 6 caracteres, incluindo letras e números.");
-      return;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      showError("As senhas não coincidem.");
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
       setSaving(true);
+
+      const wantsChangePassword =
+        form.currentPassword || form.password || form.confirmPassword;
 
       const payload = {
         name: form.name.trim(),
@@ -137,6 +159,7 @@ export function AdminProfile() {
         confirmPassword: "",
       });
 
+      setErrors({});
       setEditing(false);
       resetPasswordVisibility();
 
@@ -153,147 +176,180 @@ export function AdminProfile() {
   }, []);
 
   return (
-    <>
-      <AdminHeader />
+    <main className="admin-page">
+      <section className="admin-hero">
+        <h1>Meu Perfil</h1>
+        <p>Visualize e atualize os dados da sua conta administrativa.</p>
+      </section>
 
-      <main className="admin-page">
-        <section className="admin-hero">
-          <h1>Meu Perfil</h1>
-          <p>Visualize e atualize os dados da sua conta administrativa.</p>
-        </section>
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <h2>Dados pessoais</h2>
 
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-            <h2>Dados pessoais</h2>
+          <button
+            type="button"
+            className="admin-edit-button"
+            onClick={editing ? handleCancelEdit : () => setEditing(true)}
+          >
+            {editing ? "Cancelar" : "Editar"}
+          </button>
+        </div>
 
-            <button
-              type="button"
-              className="admin-edit-button"
-              onClick={editing ? handleCancelEdit : () => setEditing(true)}
-            >
-              {editing ? "Cancelar" : "Editar"}
-            </button>
-          </div>
-
-          {loading ? (
-            <p className="admin-loading">Carregando perfil...</p>
-          ) : !editing ? (
-            <div className="admin-profile-card">
-              <div>
-                <span>Nome:</span>
-                <strong>{profile?.name || "Não informado"}</strong>
-              </div>
-
-              <div>
-                <span>Email:</span>
-                <strong>{profile?.email || "Não informado"}</strong>
-              </div>
-
-              <div>
-                <span>Tipo de conta:</span>
-                <strong>{formatRole(profile?.role)}</strong>
-              </div>
+        {loading ? (
+          <p className="admin-loading">Carregando perfil...</p>
+        ) : !editing ? (
+          <div className="admin-profile-card">
+            <div>
+              <span>Nome:</span>
+              <strong>{profile?.name || "Não informado"}</strong>
             </div>
-          ) : (
-            <form className="admin-profile-form" onSubmit={handleSubmit}>
-              <label>
-                Nome
+
+            <div>
+              <span>Email:</span>
+              <strong>{profile?.email || "Não informado"}</strong>
+            </div>
+
+            <div>
+              <span>Tipo de conta:</span>
+              <strong>{formatRole(profile?.role)}</strong>
+            </div>
+          </div>
+        ) : (
+          <form className="admin-profile-form" onSubmit={handleSubmit}>
+            <label>
+              Nome
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Informe seu nome"
+                className={errors.name ? "input-error-border" : ""}
+              />
+              {errors.name && (
+                <small className="input-error">{errors.name}</small>
+              )}
+            </label>
+
+            <label>
+              Email
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Informe seu email"
+                className={errors.email ? "input-error-border" : ""}
+              />
+              {errors.email && (
+                <small className="input-error">{errors.email}</small>
+              )}
+            </label>
+
+            <label>
+              Senha atual
+              <div className="password-field">
                 <input
-                  name="name"
-                  value={form.name}
+                  name="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={form.currentPassword}
                   onChange={handleChange}
-                  minLength="3"
-                  maxLength="100"
-                  required
+                  placeholder="Obrigatória para alterar senha"
+                  className={
+                    errors.currentPassword ? "input-error-border" : ""
+                  }
                 />
-              </label>
 
-              <label>
-                Email
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                >
+                  {showCurrentPassword ? (
+                    <FaEyeSlash size={22} />
+                  ) : (
+                    <FaEye size={22} />
+                  )}
+                </button>
+              </div>
+              {errors.currentPassword && (
+                <small className="input-error">
+                  {errors.currentPassword}
+                </small>
+              )}
+            </label>
+
+            <label>
+              Nova senha
+              <div className="password-field">
                 <input
-                  name="email"
-                  type="email"
-                  value={form.email}
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
                   onChange={handleChange}
-                  maxLength="150"
-                  required
+                  placeholder="Nova senha"
+                  className={errors.password ? "input-error-border" : ""}
                 />
-              </label>
 
-              <label>
-                Senha atual
-                <div className="password-field">
-                  <input
-                    name="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={form.currentPassword}
-                    onChange={handleChange}
-                    placeholder="Obrigatória para alterar senha"
-                  />
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash size={22} />
+                  ) : (
+                    <FaEye size={22} />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <small className="input-error">{errors.password}</small>
+              )}
+            </label>
 
-                  <button
-                    type="button"
-                    className="password-eye-button"
-                    onClick={() => setShowCurrentPassword((prev) => !prev)}
-                  >
-                    {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </label>
+            <label>
+              Confirmar senha
+              <div className="password-field">
+                <input
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Repita a nova senha"
+                  className={
+                    errors.confirmPassword ? "input-error-border" : ""
+                  }
+                />
 
-              <label>
-                Nova senha
-                <div className="password-field">
-                  <input
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Opcional"
-                  />
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? (
+                    <FaEyeSlash size={22} />
+                  ) : (
+                    <FaEye size={22} />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <small className="input-error">
+                  {errors.confirmPassword}
+                </small>
+              )}
+            </label>
 
-                  <button
-                    type="button"
-                    className="password-eye-button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </label>
+            <small className="password-hint">
+              Deixe os campos de senha em branco caso não queira alterar.
+            </small>
 
-              <label>
-                Confirmar senha
-                <div className="password-field">
-                  <input
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Repita a nova senha"
-                  />
-
-                  <button
-                    type="button"
-                    className="password-eye-button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  >
-                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </label>
-
-              <small className="password-hint">
-                Deixe os campos de senha em branco caso não queira alterar.
-              </small>
-
-              <button type="submit" className="btn-main" disabled={saving}>
-                {saving ? "Salvando..." : "Salvar perfil"}
-              </button>
-            </form>
-          )}
-        </section>
-      </main>
-    </>
+            <button type="submit" className="btn-main" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar perfil"}
+            </button>
+          </form>
+        )}
+      </section>
+    </main>
   );
 }

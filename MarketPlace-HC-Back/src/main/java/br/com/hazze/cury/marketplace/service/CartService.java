@@ -40,11 +40,7 @@ public class CartService {
             throw new BusinessException("Esse usuário já possui um carrinho.");
         }
 
-        Cart cart = new Cart();
-        cart.setUser(user);
-        cart.setStatus(CartStatus.ACTIVE);
-        cart.setTotal(BigDecimal.ZERO);
-
+        Cart cart = createCartEntity(user);
         return cartMapper.toResponse(cartRepository.save(cart));
     }
 
@@ -87,13 +83,15 @@ public class CartService {
     @Transactional
     public CartItemResponseDTO addItemByUser(CartItemRequestDTO dto, Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado."));
+                .orElseGet(() -> createCartIfNotExists(userId));
 
         return addItem(cart.getId(), dto, userId);
     }
 
     @Transactional
     public CartItemResponseDTO addItem(Long cartId, CartItemRequestDTO dto, Long loggedUserId) {
+        validateQuantity(dto.quantity());
+
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado."));
 
@@ -102,34 +100,23 @@ public class CartService {
         Product product = productRepository.findById(dto.productId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado."));
 
-        if (!product.getActive()) {
-            throw new BusinessException("Produto inativo.");
-        }
-
-        if (product.getStock() < dto.quantity()) {
-            throw new BusinessException("Estoque insuficiente.");
-        }
+        validateProductAvailable(product);
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cartId, dto.productId())
                 .orElseGet(() -> {
-                    CartItem newItem = cartItemMapper.toEntity(dto);
+                    CartItem newItem = new CartItem();
                     newItem.setCart(cart);
                     newItem.setProduct(product);
-                    newItem.setUnitPrice(product.getPrice());
                     newItem.setQuantity(0);
-                    newItem.setSubTotal(BigDecimal.ZERO);
                     return newItem;
                 });
 
         int newQuantity = cartItem.getQuantity() + dto.quantity();
 
-        if (product.getStock() < newQuantity) {
-            throw new BusinessException("Estoque insuficiente para a quantidade total no carrinho.");
-        }
+        validateStock(product, newQuantity);
 
+        cartItem.setProduct(product);
         cartItem.setQuantity(newQuantity);
-        cartItem.setUnitPrice(product.getPrice());
-        cartItem.setSubTotal(product.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
 
         CartItem savedItem = cartItemRepository.save(cartItem);
 
@@ -140,25 +127,25 @@ public class CartService {
 
     @Transactional
     public CartItemResponseDTO updateItemQuantity(Long cartItemId, CartItemRequestDTO dto, Long loggedUserId) {
+        validateQuantity(dto.quantity());
+
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Item do carrinho não encontrado."));
 
         validateCartOwner(cartItem.getCart(), loggedUserId);
 
-        Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado."));
-
         if (!cartItem.getProduct().getId().equals(dto.productId())) {
             throw new BusinessException("O produto do item não pode ser alterado.");
         }
 
-        if (product.getStock() < dto.quantity()) {
-            throw new BusinessException("Estoque insuficiente.");
-        }
+        Product product = productRepository.findById(dto.productId())
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado."));
 
+        validateProductAvailable(product);
+        validateStock(product, dto.quantity());
+
+        cartItem.setProduct(product);
         cartItem.setQuantity(dto.quantity());
-        cartItem.setUnitPrice(product.getPrice());
-        cartItem.setSubTotal(product.getPrice().multiply(BigDecimal.valueOf(dto.quantity())));
 
         CartItem updatedItem = cartItemRepository.save(cartItem);
 
@@ -177,6 +164,7 @@ public class CartService {
         Cart cart = cartItem.getCart();
 
         cartItemRepository.delete(cartItem);
+        cartItemRepository.flush();
 
         recalculateCartTotal(cart);
     }
@@ -184,7 +172,7 @@ public class CartService {
     @Transactional
     public void clearCartByUser(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado."));
+                .orElseGet(() -> createCartIfNotExists(userId));
 
         clearCart(cart.getId(), userId);
     }
@@ -197,10 +185,47 @@ public class CartService {
         validateCartOwner(cart, loggedUserId);
 
         List<CartItem> items = cartItemRepository.findByCartId(cartId);
+
         cartItemRepository.deleteAll(items);
+        cartItemRepository.flush();
 
         cart.setTotal(BigDecimal.ZERO);
         cartRepository.save(cart);
+    }
+
+    private Cart createCartIfNotExists(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+
+        Cart cart = createCartEntity(user);
+
+        return cartRepository.save(cart);
+    }
+
+    private Cart createCartEntity(User user) {
+        Cart cart = new Cart();
+        cart.setUser(user);
+        cart.setStatus(CartStatus.ACTIVE);
+        cart.setTotal(BigDecimal.ZERO);
+        return cart;
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new BusinessException("Quantidade deve ser maior que zero.");
+        }
+    }
+
+    private void validateProductAvailable(Product product) {
+        if (product.getActive() == null || !product.getActive()) {
+            throw new BusinessException("Produto inativo.");
+        }
+    }
+
+    private void validateStock(Product product, Integer quantity) {
+        if (product.getStock() == null || product.getStock() < quantity) {
+            throw new BusinessException("Estoque insuficiente.");
+        }
     }
 
     private void validateCartOwner(Cart cart, Long loggedUserId) {
@@ -213,7 +238,7 @@ public class CartService {
         List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
 
         BigDecimal total = items.stream()
-                .map(CartItem::getSubTotal)
+                .map(item -> item.getSubTotal() != null ? item.getSubTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotal(total);

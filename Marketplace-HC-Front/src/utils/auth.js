@@ -3,8 +3,13 @@ export function getToken() {
 }
 
 export function getUser() {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+  try {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
 }
 
 export function isAuthenticated() {
@@ -16,7 +21,14 @@ export function hasRole(role) {
   return user?.role === role;
 }
 
+export function hasAnyRole(...roles) {
+  const user = getUser();
+  return roles.includes(user?.role);
+}
+
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+
+  window.dispatchEvent(new Event("authChanged"));
 }

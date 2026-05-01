@@ -55,14 +55,13 @@ public class UserService {
             throw new BusinessException("Já existe um usuário com esse e-mail.");
         }
 
-        if (!user.getCpf().equals(dto.cpf()) && userRepository.existsByCpf(dto.cpf())) {
-            throw new BusinessException("Já existe um usuário com esse CPF.");
-        }
-
         user.setName(dto.name());
         user.setEmail(dto.email());
         user.setPhone(dto.phone());
-        user.setCpf(dto.cpf());
+
+        if (dto.password() != null && !dto.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
 
         return userMapper.toResponse(userRepository.save(user));
     }

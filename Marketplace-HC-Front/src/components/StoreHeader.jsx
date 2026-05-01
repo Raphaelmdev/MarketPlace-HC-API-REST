@@ -1,36 +1,69 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   MdSearch,
-  MdShoppingCart,
   MdPerson,
   MdLogout,
-  MdListAlt,
   MdReceiptLong,
-  MdHome
+  MdHome,MdAdminPanelSettings
 } from "react-icons/md";
-import { IoMdStar } from "react-icons/io";
+import { FaHeart, FaFilter } from "react-icons/fa";
+import { IoBagHandleSharp } from "react-icons/io5";
+
 import { useCart } from "@/context/CartContext";
+import { getUser, logout } from "@/utils/auth";
+import { isAdmin as checkAdmin } from "@/utils/roles";
+import { getCategories } from "@/services/productService";
+
 import "@/styles/components/StoreHeader.css";
 
-export function StoreHeader() {
+export function StoreHeader({ onSearch }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { cartCount } = useCart();
 
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartAnimate, setCartAnimate] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
 
   const closeTimeout = useRef(null);
   const previousCartCount = useRef(cartCount);
 
+  const isAdmin = checkAdmin(user);
+  const isClient = !!user && !isAdmin;
+  const isPublic = !user;
+
+  // 🔥 CONTROLE DE ROTAS
+  const showSearch = location.pathname.startsWith("/products");
+  const isCartPage = location.pathname.startsWith("/cart");
+
   useEffect(() => {
-    try {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      setUser(storedUser);
-    } catch {
-      setUser(null);
+    function syncUser() {
+      setUser(getUser());
     }
+
+    syncUser();
+    window.addEventListener("authChanged", syncUser);
+
+    return () => window.removeEventListener("authChanged", syncUser);
+  }, []);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await getCategories();
+        setCategories(Array.isArray(data) ? data : data.content || []);
+      } catch (err) {
+        console.error("Erro ao carregar categorias:", err);
+        setCategories([]);
+      }
+    }
+
+    loadCategories();
   }, []);
 
   useEffect(() => {
@@ -38,12 +71,12 @@ export function StoreHeader() {
       setCartAnimate(true);
       setTimeout(() => setCartAnimate(false), 300);
     }
+
     previousCartCount.current = cartCount;
   }, [cartCount]);
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
     navigate("/home", { replace: true });
   }
 
@@ -53,134 +86,179 @@ export function StoreHeader() {
   }
 
   function handleMouseLeave() {
-    closeTimeout.current = setTimeout(() => {
-      setMenuOpen(false);
-    }, 180);
+    closeTimeout.current = setTimeout(() => setMenuOpen(false), 180);
   }
 
-  const isAdmin = user?.role === "ADMIN";
+  function handleSearch(e) {
+    e.preventDefault();
+
+    const filters = {
+      name: searchTerm.trim(),
+      categoryId,
+    };
+
+    if (onSearch) {
+      onSearch(filters);
+      return;
+    }
+
+    navigate("/products", { state: { filters } });
+  }
+
+  function handleCategoryChange(e) {
+    const selectedCategoryId = e.target.value;
+    setCategoryId(selectedCategoryId);
+
+    if (onSearch) {
+      onSearch({
+        name: searchTerm.trim(),
+        categoryId: selectedCategoryId,
+      });
+    }
+  }
 
   return (
     <header className="store-header">
       <div className="header-top">
         {/* LOGO */}
-        <div
-          className="logo"
-          onClick={() => navigate(isAdmin ? "/admin" : "/home")}
-        >
+        <div className="logo" onClick={() => navigate("/home")}>
           <img src="/src/assets/logohc.png" alt="HazzeCury" />
         </div>
 
-        {/* SEARCH (somente cliente) */}
-        {!isAdmin && (
-          <div className="search-box">
-            <input placeholder="Buscar produtos..." />
-            <button>
+        {/* 🔍 BUSCA (só em products) */}
+        {showSearch && (
+          <form className="search-box" onSubmit={handleSearch}>
+            <div className="search-filter-icon">
+              <FaFilter />
+            </div>
+
+            <select
+              className="search-category"
+              value={categoryId}
+              onChange={handleCategoryChange}
+            >
+              <option value="">Todas</option>
+
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Buscar produtos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            <button type="submit">
               <MdSearch />
             </button>
-          </div>
+          </form>
         )}
 
+        {/* AÇÕES */}
         <div className="header-actions">
-
-          {/* ACCOUNT */}
+          {/* CONTA */}
           <div
             className="account"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-          <div className="account-label">
-            <MdPerson />
+            <div className="account-label">
+              <MdPerson />
 
-            <div>
-              <span>
-                {user ? `Olá, ${user.name}` : "Olá, entre ou cadastre-se"}
-              </span>
+              <div>
+                <span>
+                  {user
+                    ? `Olá, ${user.name.split(" ")[0]}`
+                    : "Olá, entre ou cadastre-se"}
+                </span>
 
-              <strong>
-                {isAdmin ? "Administrador" : "Contas e Listas"}
-              </strong>
+                <strong>{isAdmin ? "Administrador" : "Contas e Listas"}</strong>
+              </div>
             </div>
-          </div>
 
-          {menuOpen && (
-            <div className="dropdown">
-              {!user && (
-                <div className="dropdown-login">
-                  <button
-                    className="login-button"
-                    onClick={() => navigate("/auth/identify")}
-                  >
-                    Faça seu login
-                  </button>
+            {menuOpen && (
+              <div className="dropdown">
+                {isPublic && (
+                  <div className="dropdown-login">
+                    <button
+                      className="login-button"
+                      onClick={() => navigate("/auth/identify")}
+                    >
+                      Faça seu login
+                    </button>
 
-                  <p>
-                    Cliente novo?{" "}
-                    <span onClick={() => navigate("/auth/identify")}>
-                      Comece aqui
-                    </span>
-                  </p>
+                    <p>
+                      Cliente novo?{" "}
+                      <span onClick={() => navigate("/auth/identify")}>
+                        Comece aqui
+                      </span>
+                    </p>
+                  </div>
+                )}
 
-                  <div className="dropdown-divider"></div>
-                </div>
-              )}
+                {isClient && (
+                  <div className="dropdown-section">
+                    <button onClick={() => navigate("/client")}>
+                      <MdPerson /> Sua Conta
+                    </button>
 
-              {user && (
-                <div className="dropdown-section">
-                  {isAdmin ? (
+                    <button onClick={() => navigate("/client/orders")}>
+                      <MdReceiptLong /> Seus pedidos
+                    </button>
+
+                    <button onClick={() => navigate("/client/address")}>
+                      <MdHome /> Seu endereço
+                    </button>
+
+                    <button onClick={() => navigate("/client/wishlist")}>
+                      <FaHeart /> Lista de desejos
+                    </button>
+
                     <button onClick={handleLogout}>
                       <MdLogout /> Sair
                     </button>
-                  ) : (
-                    <>
-                      <button onClick={() => navigate("/client/profile")}>
-                        <MdPerson /> Seu perfil
-                      </button>
+                  </div>
+                )}
 
-                      <button onClick={() => navigate("/client/orders")}>
-                        <MdListAlt /> Seus pedidos
-                      </button>
+                {isAdmin && (
+                  <div className="dropdown-section">
+                    <button onClick={() => navigate("/admin")}>
+                      <MdAdminPanelSettings /> Painel Administrativo
+                    </button>
+                    <button onClick={handleLogout}>
+                      <MdLogout /> Sair
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-                      <button onClick={() => navigate("/client/address")}>
-                        <MdHome /> Seu endereço
-                      </button>
-
-                      <button onClick={() => navigate("/client/wishlist")}>
-                        <IoMdStar /> Lista de desejos
-                      </button>
-
-                      <button onClick={handleLogout}>
-                        <MdLogout /> Sair
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+          {/* PEDIDOS */}
+          {isClient && (
+            <div className="orders" onClick={() => navigate("/client/orders")}>
+              <MdReceiptLong />
+              <strong>Pedidos</strong>
             </div>
           )}
-        </div>
 
-          {/* CLIENT ONLY */}
-          {!isAdmin && (
-            <>
-              <div
-                className="orders"
-                onClick={() => navigate("/client/orders")}>
-                  <MdReceiptLong />
-                <strong>Pedidos</strong>
-              </div>
+          {/*SACOLA (escondida no /cart) */}
+          {!isAdmin && !isCartPage && (
+            <div className="cart" onClick={() => navigate("/cart")}>
+              <IoBagHandleSharp />
 
-              <div className="cart" onClick={() => navigate("/cart")}>
-                <MdShoppingCart />
-                <strong>Carrinho</strong>
-
-                <span
-                  className={`cart-count ${cartAnimate ? "cart-count-pop" : ""}`}
-                >
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              </div>
-            </>
+              <span
+                className={`cart-count${
+                  cartAnimate ? " cart-count-pop" : ""
+                }`}
+              >
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            </div>
           )}
         </div>
       </div>

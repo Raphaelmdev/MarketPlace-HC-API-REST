@@ -80,6 +80,14 @@ export function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
+      /*
+        IMPORTANTE:
+        No login existente, NÃO migramos o carrinho visitante automaticamente.
+        Apenas avisamos o sistema que o usuário mudou de estado.
+        O CartContext vai carregar o carrinho oficial do backend.
+      */
+      window.dispatchEvent(new Event("authChanged"));
+
       const savedUser = JSON.parse(localStorage.getItem("user"));
 
       showSuccess("Login realizado com sucesso.", () => {
@@ -98,9 +106,8 @@ export function Login() {
           navigate("/home", { replace: true });
         }
       });
-
-    } catch {
-      const message = "Email ou senha inválidos.";
+    } catch (error) {
+      const message = error.message || "Email ou senha inválidos.";
       setGeneralError(message);
       showError(message);
     } finally {
@@ -133,7 +140,9 @@ export function Login() {
               </div>
             </div>
 
-            {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
+            {fieldErrors.email && (
+              <p className="field-error">{fieldErrors.email}</p>
+            )}
           </div>
 
           <div className="auth-field">
@@ -163,7 +172,9 @@ export function Login() {
               </button>
             </div>
 
-            {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
+            {fieldErrors.password && (
+              <p className="field-error">{fieldErrors.password}</p>
+            )}
           </div>
 
           <div className="login-options">

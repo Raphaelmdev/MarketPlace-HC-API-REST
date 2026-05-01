@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { StoreHeader } from "@/components/StoreHeader";
 import { cancelMyOrder, getMyOrders } from "@/services/clientService";
 import { useToast } from "@/context/ToastContext";
 import { formatPrice } from "@/utils/format";
@@ -27,7 +26,6 @@ export function ClientOrders() {
       SHIPPED: "Enviado",
       DELIVERED: "Entregue",
       CANCELED: "Cancelado",
-      CANCELLED: "Cancelado",
     };
 
     return map[normalizeStatus(status)] || "Pendente";
@@ -41,14 +39,13 @@ export function ClientOrders() {
       SHIPPED: "shipped",
       DELIVERED: "delivered",
       CANCELED: "canceled",
-      CANCELLED: "canceled",
     };
 
     return map[normalizeStatus(status)] || "pending";
   }
 
   function canCancelOrder(status) {
-    return ["PENDING", "PAID", "CONFIRMED"].includes(normalizeStatus(status));
+    return ["PENDING", "PAID"].includes(normalizeStatus(status));
   }
 
   async function loadOrders() {
@@ -112,7 +109,7 @@ export function ClientOrders() {
 
   return (
     <>
-      <StoreHeader />
+      
 
       <main className="client-page">
         <section className="client-hero">

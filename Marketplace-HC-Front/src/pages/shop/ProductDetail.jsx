@@ -1,40 +1,47 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+
 import { useCart } from "@/context/CartContext";
+import { useToast } from "@/context/ToastContext";
+import { getUser } from "@/utils/auth";
+import { formatPrice } from "@/utils/format";
+import { StoreHeader } from "@/components/StoreHeader";
+
+import {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "@/services/wishlistService";
+
 import "@/styles/pages/ProductDetail.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-function formatPrice(price) {
-  return Number(price || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
-
 function getImage(imageUrl) {
-  if (!imageUrl) {
-    return "https://images.unsplash.com/photo-1594938298603-c8148c4b4d8b?w=800&q=80";
-  }
+  const fallback =
+    "https://images.unsplash.com/photo-1594938298603-c8148c4b4d8b?w=800&q=80";
+  if (!imageUrl) return fallback;
 
   const url = imageUrl.trim().replace(/"/g, "");
-
-  if (url.startsWith("/")) {
-    return API_URL + url;
-  }
-
-  return url;
+  return url.startsWith("/") ? API_URL + url : url;
 }
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { showSuccess, showError } = useToast();
+
+  const user = getUser();
+  const isAdmin = user?.role === "ADMIN";
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     async function loadProduct() {
@@ -45,9 +52,8 @@ export function ProductDetail() {
         const response = await fetch(`${API_URL}/products/${id}`);
         const data = await response.json().catch(() => null);
 
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(data?.message || "Produto não encontrado.");
-        }
 
         setProduct(data);
       } catch (err) {
@@ -60,6 +66,27 @@ export function ProductDetail() {
     loadProduct();
   }, [id]);
 
+  useEffect(() => {
+    async function checkFavorite() {
+      if (!user || isAdmin) return;
+
+      try {
+        const data = await getWishlist();
+
+        const exists = data.some(
+          (item) =>
+            Number(item.product?.id || item.productId || item.id) === Number(id)
+        );
+
+        setIsFavorite(exists);
+      } catch (err) {
+        console.error("Erro ao verificar lista de desejos:", err);
+      }
+    }
+
+    checkFavorite();
+  }, [id]);
+
   function handleDecrement() {
     setQuantity((prev) => Math.max(1, prev - 1));
   }
@@ -69,11 +96,55 @@ export function ProductDetail() {
     setQuantity((prev) => Math.min(product.stock, prev + 1));
   }
 
-  function handleAddToCart() {
+  async function handleToggleWishlist() {
+    if (isAdmin) return;
+
+    if (!user) {
+      navigate("/auth/identify", { state: { from: `/products/${id}` } });
+      return;
+    }
+
+    try {
+      if (isFavorite) {
+        await removeFromWishlist(id);
+        setIsFavorite(false);
+        showSuccess("Produto removido da lista de desejos.");
+      } else {
+        await addToWishlist(id);
+        setIsFavorite(true);
+        showSuccess("Produto adicionado à lista de desejos.");
+      }
+    } catch (err) {
+      showError(err.message || "Erro ao atualizar lista de desejos.");
+    }
+  }
+
+  async function handleAddToCart() {
     if (!product) return;
+    if (isAdmin) return;
+
+    let success = true;
 
     for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+      const added = await addToCart(product);
+      if (!added) {
+        success = false;
+        break;
+      }
+    }
+
+    if (success) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
+  }
+
+  function handleCheckout() {
+    if (isAdmin) return;
+
+    if (!user) {
+      navigate("/auth/identify", { state: { from: `/products/${id}` } });
+      return;
     }
 
     navigate("/cart");
@@ -81,32 +152,30 @@ export function ProductDetail() {
 
   const unavailable = product?.stock === 0 || product?.active === false;
 
-  if (loading) {
+  if (loading)
     return (
       <div className="detail-page">
-        <DetailHeader />
+        <StoreHeader />
         <p className="detail-message">Carregando produto...</p>
       </div>
     );
-  }
 
-  if (error || !product) {
+  if (error || !product)
     return (
       <div className="detail-page">
-        <DetailHeader />
+        <StoreHeader />
         <div className="detail-error-block">
           <p className="detail-error">{error || "Produto não encontrado."}</p>
-          <button className="detail-back-btn" onClick={() => navigate(-1)}>
+          <button className="detail-btn-back" onClick={() => navigate(-1)}>
             ← Voltar
           </button>
         </div>
       </div>
     );
-  }
 
   return (
     <div className="detail-page">
-      <DetailHeader />
+      <StoreHeader />
 
       <main className="detail-main">
         <nav className="detail-breadcrumb">
@@ -120,20 +189,33 @@ export function ProductDetail() {
         <div className="detail-content">
           <div className="detail-image-col">
             <div className="detail-image-wrapper">
+              {!isAdmin && (
+                <button
+                  type="button"
+                  className={`detail-wishlist ${isFavorite ? "active" : ""}`}
+                  onClick={handleToggleWishlist}
+                  title={
+                    isFavorite
+                      ? "Remover da lista de desejos"
+                      : "Adicionar à lista de desejos"
+                  }
+                >
+                  {isFavorite ? <FaHeart /> : <FaRegHeart />}
+                </button>
+              )}
+
               <img
                 src={getImage(product.imageUrl)}
                 alt={product.name}
                 className="detail-image"
-                onError={(e) => {
-                  e.target.src =
-                    "https://images.unsplash.com/photo-1594938298603-c8148c4b4d8b?w=800&q=80";
-                }}
               />
+
               {product.categoryName && (
                 <span className="detail-category-badge">
                   {product.categoryName}
                 </span>
               )}
+
               {unavailable && (
                 <div className="detail-sold-out-overlay">
                   <span>Esgotado</span>
@@ -158,36 +240,38 @@ export function ProductDetail() {
                 <p className="detail-description">{product.description}</p>
               )}
 
+              {isAdmin && (
+                <p className="detail-admin-stock">
+                  Estoque: {product.stock ?? 0}
+                </p>
+              )}
+
               <div className="detail-meta">
                 <div className="detail-meta-item">
                   <span className="detail-meta-label">Disponibilidade</span>
-                  <span className={`detail-meta-value ${unavailable ? "out" : "in"}`}>
-                    {unavailable ? "Indisponível" : `${product.stock} em estoque`}
-                  </span>
-                </div>
-
-                <div className="detail-meta-item">
-                  <span className="detail-meta-label">Referência</span>
-                  <span className="detail-meta-value">
-                    HC-{String(product.id).padStart(4, "0")}
+                  <span
+                    className={`detail-meta-value ${
+                      unavailable ? "out" : "in"
+                    }`}
+                  >
+                    {unavailable
+                      ? "Indisponível"
+                      : `${product.stock} em estoque`}
                   </span>
                 </div>
               </div>
 
-              {!unavailable && (
+              {!isAdmin && !unavailable && (
                 <div className="detail-quantity">
                   <span className="detail-quantity-label">Quantidade</span>
                   <div className="detail-quantity-control">
-                    <button
-                      className="detail-qty-btn"
-                      onClick={handleDecrement}
-                      disabled={quantity <= 1}
-                    >
+                    <button onClick={handleDecrement} disabled={quantity <= 1}>
                       −
                     </button>
-                    <span className="detail-qty-value">{quantity}</span>
+
+                    <span>{quantity}</span>
+
                     <button
-                      className="detail-qty-btn"
                       onClick={handleIncrement}
                       disabled={quantity >= product.stock}
                     >
@@ -198,17 +282,39 @@ export function ProductDetail() {
               )}
 
               <div className="detail-actions">
-                <button
-                  className="detail-btn-cart"
-                  onClick={handleAddToCart}
-                  disabled={unavailable}
-                >
-                  {unavailable ? "Esgotado" : "Adicionar ao carrinho"}
-                </button>
+                {!isAdmin && (
+                  <>
+                    <button
+                      className={`detail-btn-cart ${added ? "added" : ""}`}
+                      onClick={handleAddToCart}
+                      disabled={unavailable}
+                    >
+                      {unavailable
+                        ? "Esgotado"
+                        : added
+                        ? "✦ Adicionado"
+                        : "Adicionar ao carrinho"}
+                    </button>
+
+                    <button
+                      className="detail-btn-checkout"
+                      onClick={handleCheckout}
+                      disabled={unavailable}
+                    >
+                      {user ? "Ir para o carrinho" : "Finalizar pedido"}
+                    </button>
+
+                    {!user && (
+                      <p className="detail-login-hint">
+                        Faça login para finalizar seu pedido.
+                      </p>
+                    )}
+                  </>
+                )}
 
                 <button
                   className="detail-btn-back"
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate("/products")}
                 >
                   ← Continuar comprando
                 </button>
@@ -218,21 +324,5 @@ export function ProductDetail() {
         </div>
       </main>
     </div>
-  );
-}
-
-function DetailHeader() {
-  return (
-    <header className="detail-topbar">
-      <Link to="/" className="detail-logo">
-        HazzeCury
-      </Link>
-
-      <div className="detail-nav">
-        <Link to="/products">Vitrine</Link>
-        <Link to="/login">Entrar</Link>
-        <Link to="/register">Cadastrar</Link>
-      </div>
-    </header>
   );
 }
