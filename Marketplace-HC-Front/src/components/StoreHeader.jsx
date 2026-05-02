@@ -5,7 +5,8 @@ import {
   MdPerson,
   MdLogout,
   MdReceiptLong,
-  MdHome,MdAdminPanelSettings
+  MdHome,
+  MdAdminPanelSettings
 } from "react-icons/md";
 import { FaHeart, FaFilter } from "react-icons/fa";
 import { IoBagHandleSharp } from "react-icons/io5";
@@ -37,7 +38,6 @@ export function StoreHeader({ onSearch }) {
   const isClient = !!user && !isAdmin;
   const isPublic = !user;
 
-  // 🔥 CONTROLE DE ROTAS
   const showSearch = location.pathname.startsWith("/products");
   const isCartPage = location.pathname.startsWith("/cart");
 
@@ -117,6 +117,23 @@ export function StoreHeader({ onSearch }) {
     }
   }
 
+  
+  function handleLoginClick() {
+  const currentUser = getUser(); 
+
+  if (currentUser) {
+    const currentIsAdmin = checkAdmin(currentUser);
+    navigate(currentIsAdmin ? "/admin" : "/client");
+    return;
+  }
+
+  setUser(null);
+
+  navigate("/auth/identify", {
+    state: { from: location.pathname }
+  });
+}
+
   return (
     <header className="store-header">
       <div className="header-top">
@@ -125,7 +142,7 @@ export function StoreHeader({ onSearch }) {
           <img src="/src/assets/logohc.png" alt="HazzeCury" />
         </div>
 
-        {/* 🔍 BUSCA (só em products) */}
+        {/* BUSCA */}
         {showSearch && (
           <form className="search-box" onSubmit={handleSearch}>
             <div className="search-filter-icon">
@@ -166,7 +183,7 @@ export function StoreHeader({ onSearch }) {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <div className="account-label">
+            <div className="account-label" onClick={handleLoginClick}>
               <MdPerson />
 
               <div>
@@ -176,7 +193,9 @@ export function StoreHeader({ onSearch }) {
                     : "Olá, entre ou cadastre-se"}
                 </span>
 
-                <strong>{isAdmin ? "Administrador" : "Contas e Listas"}</strong>
+                <strong>
+                  {isAdmin ? "Administrador" : "Contas e Listas"}
+                </strong>
               </div>
             </div>
 
@@ -186,7 +205,7 @@ export function StoreHeader({ onSearch }) {
                   <div className="dropdown-login">
                     <button
                       className="login-button"
-                      onClick={() => navigate("/auth/identify")}
+                      onClick={handleLoginClick}
                     >
                       Faça seu login
                     </button>
@@ -229,6 +248,7 @@ export function StoreHeader({ onSearch }) {
                     <button onClick={() => navigate("/admin")}>
                       <MdAdminPanelSettings /> Painel Administrativo
                     </button>
+
                     <button onClick={handleLogout}>
                       <MdLogout /> Sair
                     </button>
@@ -246,7 +266,7 @@ export function StoreHeader({ onSearch }) {
             </div>
           )}
 
-          {/*SACOLA (escondida no /cart) */}
+          {/* SACOLA */}
           {!isAdmin && !isCartPage && (
             <div className="cart" onClick={() => navigate("/cart")}>
               <IoBagHandleSharp />

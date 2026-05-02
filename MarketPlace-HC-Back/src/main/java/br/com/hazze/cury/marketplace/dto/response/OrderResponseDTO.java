@@ -34,6 +34,18 @@ public record OrderResponseDTO(
         Long userId,
 
         @Schema(
+                description = "Nome do usuário que realizou o pedido.",
+                example = "Raphael Martins"
+        )
+        String userName,
+
+        @Schema(
+                description = "E-mail do usuário que realizou o pedido.",
+                example = "raphael@email.com"
+        )
+        String userEmail,
+
+        @Schema(
                 description = "Lista de itens do pedido."
         )
         List<OrderItemResponseDTO> items,

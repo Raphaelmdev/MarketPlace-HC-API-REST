@@ -37,7 +37,6 @@ import { AdminCategories } from "@/pages/admin/AdminCategories";
 import { AdminUsers } from "@/pages/admin/AdminUsers";
 import { AdminOrders } from "@/pages/admin/AdminOrders";
 import { AdminCreateUser } from "@/pages/admin/AdminCreateAdmin";
-
 function ClientLayout() {
   return (
     <>

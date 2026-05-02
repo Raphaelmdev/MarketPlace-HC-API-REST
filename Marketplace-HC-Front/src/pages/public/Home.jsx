@@ -1,19 +1,41 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getUser } from "@/utils/auth";
 import "@/styles/pages/Home.css";
 
 export function Home() {
-  const user = getUser();
+  const navigate = useNavigate();
+
+  function handleEnterClick() {
+    const user = getUser();
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user.role === "ADMIN") {
+      navigate("/admin");
+      return;
+    }
+
+    navigate("/client");
+  }
 
   return (
     <div className="home">
-
-      {/* ── Hero ── */}
       <section className="hero">
-
         <div className="top-actions">
-          <Link to="/login"    className="btn-outline">Entrar</Link>
-          <Link to="/register" className="btn-outline">Cadastrar</Link>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={handleEnterClick}
+          >
+            Entrar
+          </button>
+
+          <Link to="/register" className="btn-outline">
+            Cadastrar
+          </Link>
         </div>
 
         <div className="hero-ornament">
@@ -30,10 +52,8 @@ export function Home() {
             Ver Coleção
           </Link>
         </div>
-
       </section>
 
-      {/* ── Redes Sociais ── */}
       <section className="social">
         <h2>Redes Sociais</h2>
         <span className="gold-rule" />
@@ -47,12 +67,10 @@ export function Home() {
         </a>
       </section>
 
-      {/* ── Equipe ── */}
       <section className="devs">
         <h2 className="devs-title">Equipe</h2>
 
         <div className="dev-cards-grid">
-
           <div className="dev-card">
             <h3>Raphael Martins</h3>
             <div className="social-links">
@@ -88,15 +106,12 @@ export function Home() {
               <a href="https://www.linkedin.com/in/reinaldo-campos-developer/" target="_blank" rel="noreferrer">LinkedIn</a>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* ── Footer ── */}
       <footer className="footer">
         <p>© 2026 HazzeCury — Todos os direitos reservados</p>
       </footer>
-
     </div>
   );
 }

@@ -175,9 +175,15 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Acesso negado",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+   @DeleteMapping("/{id}")
+        public ResponseEntity<Void> delete(
+                @PathVariable Long id,
+                Authentication authentication
+        ) {
+        User loggedUser = (User) authentication.getPrincipal();
+
+        service.delete(id, loggedUser.getId());
+
         return ResponseEntity.noContent().build();
-    }
 }
+    }

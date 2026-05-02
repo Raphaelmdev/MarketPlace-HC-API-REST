@@ -44,6 +44,7 @@ export function ProductDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0,0);
     async function loadProduct() {
       try {
         setLoading(true);
@@ -262,25 +263,30 @@ export function ProductDetail() {
               </div>
 
               {!isAdmin && !unavailable && (
-                <div className="detail-quantity">
-                  <span className="detail-quantity-label">Quantidade</span>
-                  <div className="detail-quantity-control">
-                    <button onClick={handleDecrement} disabled={quantity <= 1}>
-                      −
-                    </button>
+                  <div className="detail-quantity">
+                    <span className="detail-quantity-label">Quantidade</span>
 
-                    <span>{quantity}</span>
+                    <div className="detail-quantity-control">
+                      <button
+                        className="detail-qty-btn"
+                        onClick={handleDecrement}
+                        disabled={quantity <= 1}
+                      >
+                        −
+                      </button>
 
-                    <button
-                      onClick={handleIncrement}
-                      disabled={quantity >= product.stock}
-                    >
-                      +
-                    </button>
+                      <span className="detail-qty-value">{quantity}</span>
+
+                      <button
+                        className="detail-qty-btn"
+                        onClick={handleIncrement}
+                        disabled={quantity >= product.stock}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-
+                )}
               <div className="detail-actions">
                 {!isAdmin && (
                   <>

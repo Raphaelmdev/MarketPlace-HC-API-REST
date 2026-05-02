@@ -7,6 +7,7 @@ import br.com.hazze.cury.marketplace.entities.User;
 import br.com.hazze.cury.marketplace.exceptions.BusinessException;
 import br.com.hazze.cury.marketplace.exceptions.ResourceNotFoundException;
 import br.com.hazze.cury.marketplace.mappers.UserMapper;
+import br.com.hazze.cury.marketplace.repositories.CartRepository;
 import br.com.hazze.cury.marketplace.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CartRepository cartRepository;
 
     @Transactional
     public UserResponseDTO createAdmin(UserAdminRequestDTO dto) {
@@ -94,19 +96,33 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
-    @Transactional
-    public void delete(Long id) {
+        @Transactional
+        public void delete(Long id, Long authenticatedUserId) {
         User user = findEntityById(id);
-        userRepository.delete(user);
-    }
 
-    private void validateEmail(String email) {
+        if (user.getId().equals(authenticatedUserId)) {
+            throw new BusinessException("Você não pode excluir sua própria conta.");
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            throw new BusinessException("Não é permitido excluir outro administrador.");
+        }
+
+        if (user.getOrders() != null && !user.getOrders().isEmpty()) {
+            throw new BusinessException("Usuário possui pedidos e não pode ser excluído.");
+        }
+
+        cartRepository.deleteByUserId(user.getId());
+        userRepository.delete(user);
+}
+
+        private void validateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new BusinessException("Já existe um usuário com esse e-mail.");
         }
     }
 
-    private User findEntityById(Long id) {
+        private User findEntityById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
     }

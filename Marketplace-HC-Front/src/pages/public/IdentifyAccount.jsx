@@ -9,7 +9,7 @@ export function IdentifyAccount() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from || "/client";
+  const from = location.state?.from || "/cart";
 
   const [email, setEmail] = useState(location.state?.email || "");
   const [step, setStep] = useState("email");
@@ -20,7 +20,8 @@ export function IdentifyAccount() {
     e.preventDefault();
     setError("");
 
-    const validationError = validateEmail(email);
+    const cleanEmail = email.trim();
+    const validationError = validateEmail(cleanEmail);
 
     if (validationError) {
       setError(validationError);
@@ -30,8 +31,6 @@ export function IdentifyAccount() {
     setLoading(true);
 
     try {
-      const cleanEmail = email.trim();
-
       const data = await checkEmail(cleanEmail);
 
       if (data.exists) {
@@ -95,10 +94,12 @@ export function IdentifyAccount() {
             <h3>Novo por aqui?</h3>
 
             <p className="auth-description">
-              Não encontramos uma conta com este email. Crie sua conta para continuar comprando.
+              Não encontramos uma conta com este email. Crie sua conta para
+              continuar comprando.
             </p>
 
             <button
+              type="button"
               className="auth-submit"
               onClick={() =>
                 navigate("/register", {
@@ -111,6 +112,7 @@ export function IdentifyAccount() {
             </button>
 
             <button
+              type="button"
               className="auth-submit secondary-auth-button"
               onClick={() => {
                 setStep("email");

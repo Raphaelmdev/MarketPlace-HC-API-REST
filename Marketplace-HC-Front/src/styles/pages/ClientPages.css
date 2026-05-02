@@ -774,8 +774,7 @@
     margin-right: 8px;
 }
 .profile-card strong {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.05rem;
+  font-size: 1.12rem;
   font-weight: 500;
   color: var(--branco-puro);
 }

@@ -1,5 +1,11 @@
 const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
+// TESTE: 30 segundos
+//const SESSION_DURATION = 1000 * 30;
+
+// PADRÃO: 30 minutos
+const SESSION_DURATION = 1000 * 60 * 60 * 2;
+
 async function getErrorMessage(response, defaultMessage) {
   try {
     const errorData = await response.json();
@@ -7,6 +13,25 @@ async function getErrorMessage(response, defaultMessage) {
   } catch {
     return defaultMessage;
   }
+}
+
+function saveSession(result) {
+  const expiresAt = Date.now() + SESSION_DURATION;
+
+  localStorage.setItem("token", result.token);
+  localStorage.setItem("expiresAt", String(expiresAt));
+
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      id: result.id,
+      name: result.name,
+      email: result.email,
+      role: result.role
+    })
+  );
+
+  window.dispatchEvent(new Event("authChanged"));
 }
 
 export async function checkEmail(email) {
@@ -51,24 +76,13 @@ export async function login(data) {
   });
 
   if (!response.ok) {
-    throw new Error("Email ou senha inválidos.");
+    const message = await getErrorMessage(response, "Email ou senha inválidos.");
+    throw new Error(message);
   }
 
   const result = await response.json();
 
-  localStorage.setItem("token", result.token);
-
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      id: result.id,
-      name: result.name,
-      email: result.email,
-      role: result.role
-    })
-  );
-
-  window.dispatchEvent(new Event("authChanged"));
+  saveSession(result);
 
   return result;
 }
@@ -108,11 +122,4 @@ export async function resetPassword(data) {
   }
 
   return await response.json();
-}
-
-export function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-
-  window.dispatchEvent(new Event("authChanged"));
 }

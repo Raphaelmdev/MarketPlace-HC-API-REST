@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { MdEmail, MdLock } from "react-icons/md";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -103,7 +103,7 @@ export function Login() {
         } else if (savedUser?.role === "CLIENT") {
           navigate("/client", { replace: true });
         } else {
-          navigate("/home", { replace: true });
+          navigate("/admin/adminArea", { replace: true });
         }
       });
     } catch (error) {

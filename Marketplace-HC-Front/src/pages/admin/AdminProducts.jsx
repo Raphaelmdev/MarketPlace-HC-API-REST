@@ -289,16 +289,26 @@ export function AdminProducts() {
           </select>
 
           <div className="admin-image-upload admin-full">
-            <label>Imagem do produto</label>
+              <label>Imagem do produto</label>
 
-            <input type="file" accept="image/*" onChange={handleImageChange} />
+              <input
+                id="imageUpload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                hidden
+              />
 
-            {imagePreview && (
-              <div className="admin-image-preview">
-                <img src={imagePreview} alt="Prévia do produto" />
-              </div>
-            )}
-          </div>
+              <label htmlFor="imageUpload" className="admin-image-button">
+                Escolher arquivo
+              </label>
+
+              {imagePreview && (
+                <div className="admin-image-preview">
+                  <img src={imagePreview} alt="Prévia do produto" />
+                </div>
+              )}
+            </div>
 
           <textarea
             name="description"
