@@ -89,7 +89,7 @@ export function AdminHeader() {
           <div className="admin-account-label">
             <MdPerson />
             <div>
-              <span>Área Administrativa</span>
+              <span>ÁREA ADMINISTRATIVA</span>
               <strong>{user?.name?.split(" ")[0] ?? "Administrador"}</strong>
             </div>
           </div>

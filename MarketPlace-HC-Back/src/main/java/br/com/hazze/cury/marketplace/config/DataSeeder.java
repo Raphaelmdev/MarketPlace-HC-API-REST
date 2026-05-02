@@ -84,6 +84,9 @@ public class DataSeeder implements ApplicationRunner {
 
             produto("Calça Social Bege", "Calça bege em linho italiano, leve e elegante para o dia a dia.",
                 "329.90", 10, "https://torratorra.vteximg.com.br/arquivos/ids/2103150-960-1200/28251000208503.jpg?v=638745443875100000", calcas),
+            
+            produto("Calça Social Azul Marinho", "Calça social azul marinho em lã fria premium, corte slim e acabamento refinado.",
+                "359.90", 14, "https://acdn-us.mitiendanube.com/stores/003/058/627/products/zarref-3576302451-15068-calca-alfaiataria-masculina-social-esporte-fino-premium-azul-escuro-95a9559e228e1372ff17208873736587-1024-1024.webp", calcas),
 
             // GRAVATAS & ACESSÓRIOS
             produto("Gravata Seda Bordô", "Gravata em seda pura bordô, acabamento artesanal.",
@@ -106,7 +109,10 @@ public class DataSeeder implements ApplicationRunner {
                 "699.90", 8, "https://hmbrasil.vtexassets.com/arquivos/ids/8227062-1440-auto/1306173001-1.webp?v=639131276788670000&quality=8", blazers),
 
             produto("Blazer Xadrez Príncipe de Gales", "Blazer em tecido xadrez príncipe de Gales, sofisticação atemporal.",
-                "829.90", 5, "https://acdn-us.mitiendanube.com/stores/002/130/801/products/whatsapp-image-2025-02-28-at-16-09-30-1-92cfde790fdb0c764517407699098067-1024-1024.webp", blazers)
+                "829.90", 5, "https://acdn-us.mitiendanube.com/stores/002/130/801/products/whatsapp-image-2025-02-28-at-16-09-30-1-92cfde790fdb0c764517407699098067-1024-1024.webp", blazers),
+                
+            produto("Blazer Marrom Café", "Blazer marrom café em tecido premium, corte moderno com caimento sofisticado","789.90", 6, "https://vertsophistique.com.br/wp-content/uploads/2024/07/087A3378.jpg", blazers)
+                
         );
 
         productRepository.saveAll(produtos);
