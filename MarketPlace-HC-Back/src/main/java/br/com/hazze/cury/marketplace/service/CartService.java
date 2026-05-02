@@ -108,6 +108,8 @@ public class CartService {
                     newItem.setCart(cart);
                     newItem.setProduct(product);
                     newItem.setQuantity(0);
+                    newItem.setUnitPrice(product.getPrice());
+                    newItem.setSubTotal(BigDecimal.ZERO);
                     return newItem;
                 });
 
@@ -117,6 +119,8 @@ public class CartService {
 
         cartItem.setProduct(product);
         cartItem.setQuantity(newQuantity);
+        cartItem.setUnitPrice(product.getPrice());
+        calculateItemSubTotal(cartItem);
 
         CartItem savedItem = cartItemRepository.save(cartItem);
 
@@ -146,6 +150,8 @@ public class CartService {
 
         cartItem.setProduct(product);
         cartItem.setQuantity(dto.quantity());
+        cartItem.setUnitPrice(product.getPrice());
+        calculateItemSubTotal(cartItem);
 
         CartItem updatedItem = cartItemRepository.save(cartItem);
 
@@ -234,11 +240,33 @@ public class CartService {
         }
     }
 
+    private void calculateItemSubTotal(CartItem cartItem) {
+        BigDecimal unitPrice = cartItem.getUnitPrice() != null
+                ? cartItem.getUnitPrice()
+                : BigDecimal.ZERO;
+
+        Integer quantity = cartItem.getQuantity() != null
+                ? cartItem.getQuantity()
+                : 0;
+
+        cartItem.setSubTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+    }
+
     private void recalculateCartTotal(Cart cart) {
         List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
 
         BigDecimal total = items.stream()
-                .map(item -> item.getSubTotal() != null ? item.getSubTotal() : BigDecimal.ZERO)
+                .map(item -> {
+                    BigDecimal unitPrice = item.getUnitPrice() != null
+                            ? item.getUnitPrice()
+                            : BigDecimal.ZERO;
+
+                    Integer quantity = item.getQuantity() != null
+                            ? item.getQuantity()
+                            : 0;
+
+                    return unitPrice.multiply(BigDecimal.valueOf(quantity));
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotal(total);

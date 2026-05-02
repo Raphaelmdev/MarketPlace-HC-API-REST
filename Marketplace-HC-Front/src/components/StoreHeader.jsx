@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   MdSearch,
@@ -15,6 +15,7 @@ import { useCart } from "@/context/CartContext";
 import { getUser, logout } from "@/utils/auth";
 import { isAdmin as checkAdmin } from "@/utils/roles";
 import { getCategories } from "@/services/productService";
+import { usePolling } from "@/utils/usePolling";
 
 import "@/styles/components/StoreHeader.css";
 
@@ -52,6 +53,7 @@ export function StoreHeader({ onSearch }) {
     return () => window.removeEventListener("authChanged", syncUser);
   }, []);
 
+  // 🔥 LOAD INICIAL
   useEffect(() => {
     async function loadCategories() {
       try {
@@ -65,6 +67,23 @@ export function StoreHeader({ onSearch }) {
 
     loadCategories();
   }, []);
+
+  // 🔥 POLLING (LEVE)
+  const fetchCategoriesSilently = useCallback(async () => {
+    const data = await getCategories();
+    return Array.isArray(data) ? data : data.content || [];
+  }, []);
+
+  const updateCategoriesSilently = useCallback((data) => {
+    setCategories(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchCategoriesSilently,
+    onUpdate: updateCategoriesSilently,
+    interval: 10000, // 👈 importante: mais leve
+    enabled: true,
+  });
 
   useEffect(() => {
     if (cartCount > previousCartCount.current) {
@@ -117,32 +136,29 @@ export function StoreHeader({ onSearch }) {
     }
   }
 
-  
   function handleLoginClick() {
-  const currentUser = getUser(); 
+    const currentUser = getUser();
 
-  if (currentUser) {
-    const currentIsAdmin = checkAdmin(currentUser);
-    navigate(currentIsAdmin ? "/admin" : "/client");
-    return;
+    if (currentUser) {
+      const currentIsAdmin = checkAdmin(currentUser);
+      navigate(currentIsAdmin ? "/admin" : "/client");
+      return;
+    }
+
+    setUser(null);
+
+    navigate("/auth/identify", {
+      state: { from: location.pathname }
+    });
   }
-
-  setUser(null);
-
-  navigate("/auth/identify", {
-    state: { from: location.pathname }
-  });
-}
 
   return (
     <header className="store-header">
       <div className="header-top">
-        {/* LOGO */}
         <div className="logo" onClick={() => navigate("/home")}>
           <img src="/src/assets/logohc.png" alt="HazzeCury" />
         </div>
 
-        {/* BUSCA */}
         {showSearch && (
           <form className="search-box" onSubmit={handleSearch}>
             <div className="search-filter-icon">
@@ -175,9 +191,7 @@ export function StoreHeader({ onSearch }) {
           </form>
         )}
 
-        {/* AÇÕES */}
         <div className="header-actions">
-          {/* CONTA */}
           <div
             className="account"
             onMouseEnter={handleMouseEnter}
@@ -258,7 +272,6 @@ export function StoreHeader({ onSearch }) {
             )}
           </div>
 
-          {/* PEDIDOS */}
           {isClient && (
             <div className="orders" onClick={() => navigate("/client/orders")}>
               <MdReceiptLong />
@@ -266,7 +279,6 @@ export function StoreHeader({ onSearch }) {
             </div>
           )}
 
-          {/* SACOLA */}
           {!isAdmin && !isCartPage && (
             <div className="cart" onClick={() => navigate("/cart")}>
               <IoBagHandleSharp />

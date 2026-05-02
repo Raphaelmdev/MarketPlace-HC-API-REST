@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 
@@ -19,6 +19,7 @@ import { StoreHeader } from "@/components/StoreHeader";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { getUser } from "@/utils/auth";
+import { usePolling } from "@/utils/usePolling";
 
 import "@/styles/pages/Products.css";
 
@@ -50,11 +51,8 @@ export function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadProducts(filters = {}) {
-    try {
-      setLoading(true);
-      setError("");
-
+  const buildProductFilters = useCallback(
+    (filters = {}) => {
       const cleanFilters = {};
 
       if (filters.name) cleanFilters.name = filters.name;
@@ -69,6 +67,27 @@ export function Products() {
       }
 
       if (filters.sort) cleanFilters.sort = filters.sort;
+
+      return cleanFilters;
+    },
+    []
+  );
+
+  const getCurrentProductFilters = useCallback(() => {
+    return buildProductFilters({
+      ...headerFilters,
+      minPrice: parseCurrencyToNumber(priceFilters.minPrice),
+      maxPrice: parseCurrencyToNumber(priceFilters.maxPrice),
+      sort: priceFilters.sort,
+    });
+  }, [buildProductFilters, headerFilters, priceFilters]);
+
+  async function loadProducts(filters = {}) {
+    try {
+      setLoading(true);
+      setError("");
+
+      const cleanFilters = buildProductFilters(filters);
 
       const data = await getProducts(cleanFilters);
       setProducts(Array.isArray(data) ? data : data.content || []);
@@ -94,6 +113,41 @@ export function Products() {
       console.error("Erro ao carregar lista de desejos:", err);
     }
   }
+
+  const fetchProductsSilently = useCallback(async () => {
+    const data = await getProducts(getCurrentProductFilters());
+    return Array.isArray(data) ? data : data.content || [];
+  }, [getCurrentProductFilters]);
+
+  const updateProductsSilently = useCallback((data) => {
+    setProducts(Array.isArray(data) ? data : []);
+  }, []);
+
+  const fetchWishlistSilently = useCallback(async () => {
+    if (!user || isAdmin) return [];
+
+    const data = await getWishlist();
+
+    return data.map((item) => item.product?.id || item.productId || item.id);
+  }, [user, isAdmin]);
+
+  const updateWishlistSilently = useCallback((ids) => {
+    setWishlistIds(new Set(ids));
+  }, []);
+
+  usePolling({
+    fetchData: fetchProductsSilently,
+    onUpdate: updateProductsSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
+
+  usePolling({
+    fetchData: fetchWishlistSilently,
+    onUpdate: updateWishlistSilently,
+    interval: 3000,
+    enabled: !loading && !!user && !isAdmin,
+  });
 
   useEffect(() => {
     loadProducts({

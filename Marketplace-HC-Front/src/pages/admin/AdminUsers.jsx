@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   deleteUser,
   getUsers,
@@ -6,6 +6,8 @@ import {
 } from "@/services/adminService";
 import { useToast } from "@/context/ToastContext";
 import { formatCPF, formatPhone } from "@/utils/format";
+import { usePolling } from "@/utils/usePolling";
+
 import "@/styles/pages/AdminPages.css";
 
 export function AdminUsers() {
@@ -39,6 +41,27 @@ export function AdminUsers() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // 🔥 POLLING USERS
+  const fetchUsersSilently = useCallback(async () => {
+    const data = await getUsers();
+    return Array.isArray(data) ? data : [];
+  }, []);
+
+  const updateUsersSilently = useCallback((data) => {
+    setUsers(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchUsersSilently,
+    onUpdate: updateUsersSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
 
   async function handleToggleStatus(user) {
     if (user.id === loggedUser?.id && user.active) {
@@ -93,10 +116,6 @@ export function AdminUsers() {
     }
   }
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const filteredUsers = users.filter((user) => {
     const term = search.toLowerCase().trim();
     const numericTerm = search.replace(/\D/g, "");
@@ -123,138 +142,124 @@ export function AdminUsers() {
 
   if (loading) {
     return (
-      <>
-
-        <main className="admin-page">
-          <p className="admin-loading">Carregando usuários...</p>
-        </main>
-      </>
+      <main className="admin-page">
+        <p className="admin-loading">Carregando usuários...</p>
+      </main>
     );
   }
 
   return (
-    <>
+    <main className="admin-page">
+      <section className="admin-hero">
+        <h1>Gerenciar Usuários</h1>
+        <p>Visualize clientes, administradores e gerencie o status das contas.</p>
+      </section>
 
-      <main className="admin-page">
-        <section className="admin-hero">
-          <h1>Gerenciar Usuários</h1>
-          <p>Visualize clientes, administradores e gerencie o status das contas.</p>
-        </section>
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <h2>Usuários cadastrados</h2>
 
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-            <h2>Usuários cadastrados</h2>
+          <div className="admin-filters">
+            <input
+              type="text"
+              placeholder="Buscar Usuários..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
-            <div className="admin-filters">
-              <input
-                type="text"
-                placeholder="Buscar Usuários..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="ALL">Todos</option>
-                <option value="ACTIVE">Ativos</option>
-                <option value="INACTIVE">Inativos</option>
-              </select>
-            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="ALL">Todos</option>
+              <option value="ACTIVE">Ativos</option>
+              <option value="INACTIVE">Inativos</option>
+            </select>
           </div>
+        </div>
 
-          {!filteredUsers.length ? (
-            <p className="admin-empty">Nenhum usuário encontrado.</p>
-          ) : (
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Telefone</th>
-                    <th>CPF</th>
-                    <th>Perfil</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
+        {!filteredUsers.length ? (
+          <p className="admin-empty">Nenhum usuário encontrado.</p>
+        ) : (
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Telefone</th>
+                  <th>CPF</th>
+                  <th>Perfil</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                    {filteredUsers.map((user) => {
-                      const isLoggedUser = user.id === loggedUser?.id;
-                      const isAdmin = user.role === "ADMIN";
+              <tbody>
+                {filteredUsers.map((user) => {
+                  const isLoggedUser = user.id === loggedUser?.id;
+                  const isAdmin = user.role === "ADMIN";
 
-                      return (
-                        <tr key={user.id}>
-                          
-                          {/* NOME LIMPO */}
-                          <td>{user.name || "-"}</td>
+                  return (
+                    <tr key={user.id}>
+                      <td>{user.name || "-"}</td>
+                      <td>{user.email || "-"}</td>
+                      <td>{user.phone ? formatPhone(user.phone) : "-"}</td>
+                      <td>{user.cpf ? formatCPF(user.cpf) : "-"}</td>
+                      <td>{formatRole(user.role)}</td>
 
-                          <td>{user.email || "-"}</td>
-                          <td>{user.phone ? formatPhone(user.phone) : "-"}</td>
-                          <td>{user.cpf ? formatCPF(user.cpf) : "-"}</td>
-                          <td>{formatRole(user.role)}</td>
+                      <td>
+                        <span
+                          className={`admin-status ${
+                            user.active ? "active" : "inactive"
+                          }`}
+                        >
+                          {user.active ? "Ativo" : "Inativo"}
+                        </span>
+                      </td>
 
-                          <td>
-                            <span
-                              className={`admin-status ${
-                                user.active ? "active" : "inactive"
-                              }`}
+                      <td>
+                        <div className="table-actions">
+
+                          {!(isLoggedUser && user.active) && (
+                            <button
+                              onClick={() => handleToggleStatus(user)}
+                              disabled={updatingUserId === user.id}
                             >
-                              {user.active ? "Ativo" : "Inativo"}
-                            </span>
-                          </td>
+                              {updatingUserId === user.id
+                                ? "Atualizando..."
+                                : user.active
+                                ? "Desativar"
+                                : "Ativar"}
+                            </button>
+                          )}
 
-                          {/* AÇÕES */}
-                          <td>
-                            <div className="table-actions">
+                          {!isLoggedUser && !isAdmin && (
+                            <button
+                              className="danger"
+                              onClick={() => handleDelete(user)}
+                              disabled={deletingUserId === user.id}
+                            >
+                              {deletingUserId === user.id
+                                ? "Removendo..."
+                                : "Remover"}
+                            </button>
+                          )}
 
-                              {/* ATIVAR/DESATIVAR */}
-                              {!(isLoggedUser && user.active) && (
-                                <button
-                                  onClick={() => handleToggleStatus(user)}
-                                  disabled={updatingUserId === user.id}
-                                >
-                                  {updatingUserId === user.id
-                                    ? "Atualizando..."
-                                    : user.active
-                                    ? "Desativar"
-                                    : "Ativar"}
-                                </button>
-                              )}
+                          {isLoggedUser && (
+                            <span className="self-badge right">Você</span>
+                          )}
 
-                              {/* REMOVER */}
-                              {!isLoggedUser && !isAdmin && (
-                                <button
-                                  className="danger"
-                                  onClick={() => handleDelete(user)}
-                                  disabled={deletingUserId === user.id}
-                                >
-                                  {deletingUserId === user.id
-                                    ? "Removendo..."
-                                    : "Remover"}
-                                </button>
-                              )}
-
-                              {/* 🔥 VOCÊ NA DIREITA */}
-                              {isLoggedUser && (
-                                <span className="self-badge right">Você</span>
-                              )}
-
-                            </div>
-                          </td>
-
-                        </tr>
-                      );
-                    })}
-               </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

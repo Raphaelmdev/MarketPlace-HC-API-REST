@@ -673,11 +673,7 @@
   border: 1px solid rgba(44,90,160,0.5);
   color: #90b8e8;
 }
-.order-status.confirmed {
-  background: rgba(13,37,64,0.5);
-  border: 1px solid rgba(59,74,138,0.5);
-  color: #a0a8de;
-}
+
 .order-status.shipped {
   background: rgba(40,20,65,0.4);
   border: 1px solid rgba(90,61,122,0.5);

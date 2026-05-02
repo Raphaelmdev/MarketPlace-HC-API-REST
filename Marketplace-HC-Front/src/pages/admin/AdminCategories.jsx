@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   createCategory,
   deleteCategory,
@@ -7,6 +7,8 @@ import {
 } from "@/services/adminService";
 import { useToast } from "@/context/ToastContext";
 import { validateCategoryForm } from "@/utils/validations";
+import { usePolling } from "@/utils/usePolling";
+
 import "@/styles/pages/AdminPages.css";
 
 const initialForm = {
@@ -41,6 +43,23 @@ export function AdminCategories() {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // 🔥 POLLING
+  const fetchCategoriesSilently = useCallback(async () => {
+    const data = await getAdminCategories();
+    return Array.isArray(data) ? data : [];
+  }, []);
+
+  const updateCategoriesSilently = useCallback((data) => {
+    setCategories(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchCategoriesSilently,
+    onUpdate: updateCategoriesSilently,
+    interval: 10000, // menos frequente (correto aqui)
+    enabled: !loading,
+  });
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -127,121 +146,113 @@ export function AdminCategories() {
 
   if (loading) {
     return (
-      <>
-        
-
-        <main className="admin-page">
-          <p className="admin-loading">Carregando categorias...</p>
-        </main>
-      </>
+      <main className="admin-page">
+        <p className="admin-loading">Carregando categorias...</p>
+      </main>
     );
   }
 
   return (
-    <>
-      
+    <main className="admin-page">
+      <section className="admin-hero">
+        <h1>Gerenciar Categorias</h1>
+        <p>Cadastre, edite e remova categorias usadas nos produtos.</p>
+      </section>
 
-      <main className="admin-page">
-        <section className="admin-hero">
-          <h1>Gerenciar Categorias</h1>
-          <p>Cadastre, edite e remova categorias usadas nos produtos.</p>
-        </section>
+      <section className="admin-panel">
+        <h2>{editingId ? "Editar categoria" : "Nova categoria"}</h2>
 
-        <section className="admin-panel">
-          <h2>{editingId ? "Editar categoria" : "Nova categoria"}</h2>
+        <form className="admin-form" onSubmit={handleSubmit}>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Nome da categoria"
+          />
 
-          <form className="admin-form" onSubmit={handleSubmit}>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Nome da categoria"
-            />
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Descrição da categoria"
+            className="admin-full"
+          />
 
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Descrição da categoria"
-              className="admin-full"
-            />
+          <div className="admin-actions admin-full">
+            <button type="submit" disabled={saving}>
+              {saving
+                ? "Salvando..."
+                : editingId
+                ? "Atualizar categoria"
+                : "Cadastrar categoria"}
+            </button>
 
-            <div className="admin-actions admin-full">
-              <button type="submit" disabled={saving}>
-                {saving
-                  ? "Salvando..."
-                  : editingId
-                    ? "Atualizar categoria"
-                    : "Cadastrar categoria"}
+            {editingId && (
+              <button type="button" className="secondary" onClick={resetForm}>
+                Cancelar edição
               </button>
-
-              {editingId && (
-                <button type="button" className="secondary" onClick={resetForm}>
-                  Cancelar edição
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-            <h2>Categorias cadastradas</h2>
-
-            <div className="admin-filters">
-              <input
-                type="text"
-                placeholder="Buscar categoria..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            )}
           </div>
+        </form>
+      </section>
 
-          {!filteredCategories.length ? (
-            <p className="admin-empty">
-              {search
-                ? "Nenhuma categoria encontrada para essa busca."
-                : "Nenhuma categoria cadastrada."}
-            </p>
-          ) : (
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Descrição</th>
-                    <th>Ações</th>
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <h2>Categorias cadastradas</h2>
+
+          <div className="admin-filters">
+            <input
+              type="text"
+              placeholder="Buscar categoria..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {!filteredCategories.length ? (
+          <p className="admin-empty">
+            {search
+              ? "Nenhuma categoria encontrada para essa busca."
+              : "Nenhuma categoria cadastrada."}
+          </p>
+        ) : (
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredCategories.map((category) => (
+                  <tr key={category.id}>
+                    <td>{category.name}</td>
+                    <td>{category.description || "-"}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button onClick={() => handleEdit(category)}>
+                          Editar
+                        </button>
+
+                        <button
+                          className="danger"
+                          onClick={() => handleDelete(category.id)}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {filteredCategories.map((category) => (
-                    <tr key={category.id}>
-                      <td>{category.name}</td>
-                      <td>{category.description || "-"}</td>
-                      <td>
-                        <div className="table-actions">
-                          <button onClick={() => handleEdit(category)}>
-                            Editar
-                          </button>
-
-                          <button
-                            className="danger"
-                            onClick={() => handleDelete(category.id)}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

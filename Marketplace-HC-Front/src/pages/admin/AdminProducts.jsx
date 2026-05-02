@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { getImageUrl } from "@/utils/imageUrl";
 import {
   createProduct,
   deleteProduct,
@@ -10,6 +11,8 @@ import {
 import { useToast } from "@/context/ToastContext";
 import { formatPrice, onlyNumbers } from "@/utils/format";
 import { validateProductForm } from "@/utils/validations";
+import { usePolling } from "@/utils/usePolling";
+
 import "@/styles/pages/AdminPages.css";
 
 const initialForm = {
@@ -63,6 +66,40 @@ export function AdminProducts() {
     loadData();
   }, []);
 
+  // 🔥 POLLING PRODUCTS
+  const fetchProductsSilently = useCallback(async () => {
+    const data = await getAdminProducts();
+    return Array.isArray(data) ? data : [];
+  }, []);
+
+  const updateProductsSilently = useCallback((data) => {
+    setProducts(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchProductsSilently,
+    onUpdate: updateProductsSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
+
+  // 🔥 POLLING CATEGORIES (quase nunca muda, mas mantém padrão)
+  const fetchCategoriesSilently = useCallback(async () => {
+    const data = await getAdminCategories();
+    return Array.isArray(data) ? data : [];
+  }, []);
+
+  const updateCategoriesSilently = useCallback((data) => {
+    setCategories(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchCategoriesSilently,
+    onUpdate: updateCategoriesSilently,
+    interval: 10000, // menos frequência
+    enabled: !loading,
+  });
+
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -101,7 +138,7 @@ export function AdminProducts() {
       active: product.active ?? true,
     });
 
-    setImagePreview(product.imageUrl || "");
+   setImagePreview(product.imageUrl ? getImageUrl(product.imageUrl) : "");
     setImageFile(null);
   }
 
@@ -236,37 +273,14 @@ export function AdminProducts() {
         <h2>{editingId ? "Editar produto" : "Novo produto"}</h2>
 
         <form className="admin-form" onSubmit={handleSubmit}>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Nome do produto"
-          />
+          <input name="name" value={form.name} onChange={handleChange} placeholder="Nome do produto" />
 
-          <input
-            name="price"
-            value={form.price}
-            onChange={handlePriceChange}
-            placeholder="Preço"
-            inputMode="numeric"
-          />
+          <input name="price" value={form.price} onChange={handlePriceChange} placeholder="Preço" inputMode="numeric" />
 
-          <input
-            name="stock"
-            type="number"
-            min="0"
-            value={form.stock}
-            onChange={handleChange}
-            placeholder="Estoque"
-          />
+          <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} placeholder="Estoque" />
 
-          <select
-            name="categoryId"
-            value={form.categoryId}
-            onChange={handleChange}
-          >
+          <select name="categoryId" value={form.categoryId} onChange={handleChange}>
             <option value="">Selecione uma categoria</option>
-
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -289,26 +303,20 @@ export function AdminProducts() {
           </select>
 
           <div className="admin-image-upload admin-full">
-              <label>Imagem do produto</label>
+            <label>Imagem do produto</label>
 
-              <input
-                id="imageUpload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                hidden
-              />
+            <input id="imageUpload" type="file" accept="image/*" onChange={handleImageChange} hidden />
 
-              <label htmlFor="imageUpload" className="admin-image-button">
-                Escolher arquivo
-              </label>
+            <label htmlFor="imageUpload" className="admin-image-button">
+              Escolher arquivo
+            </label>
 
-              {imagePreview && (
-                <div className="admin-image-preview">
-                  <img src={imagePreview} alt="Prévia do produto" />
-                </div>
-              )}
-            </div>
+            {imagePreview && (
+              <div className="admin-image-preview">
+                <img src={imagePreview} alt="Prévia do produto" />
+              </div>
+            )}
+          </div>
 
           <textarea
             name="description"
@@ -320,11 +328,7 @@ export function AdminProducts() {
 
           <div className="admin-actions admin-full">
             <button type="submit" disabled={saving}>
-              {saving
-                ? "Salvando..."
-                : editingId
-                ? "Atualizar produto"
-                : "Cadastrar produto"}
+              {saving ? "Salvando..." : editingId ? "Atualizar produto" : "Cadastrar produto"}
             </button>
 
             {editingId && (
@@ -348,12 +352,8 @@ export function AdminProducts() {
               onChange={(e) => setSearch(e.target.value)}
             />
 
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
               <option value="">Todas categorias</option>
-
               {categories.map((category) => (
                 <option key={category.id} value={String(category.id)}>
                   {category.name}
@@ -361,10 +361,7 @@ export function AdminProducts() {
               ))}
             </select>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="ALL">Todos</option>
               <option value="ACTIVE">Ativos</option>
               <option value="INACTIVE">Inativos</option>
@@ -400,24 +397,15 @@ export function AdminProducts() {
                     <td>{product.stock ?? 0}</td>
                     <td>{product.categoryName || product.category?.name || "-"}</td>
                     <td>
-                      <span
-                        className={`admin-status ${
-                          product.active ? "active" : "inactive"
-                        }`}
-                      >
+                      <span className={`admin-status ${product.active ? "active" : "inactive"}`}>
                         {product.active ? "Ativo" : "Inativo"}
                       </span>
                     </td>
                     <td>
                       <div className="table-actions">
-                        <button onClick={() => handleEdit(product)}>
-                          Editar
-                        </button>
+                        <button onClick={() => handleEdit(product)}>Editar</button>
 
-                        <button
-                          className="danger"
-                          onClick={() => handleDelete(product.id)}
-                        >
+                        <button className="danger" onClick={() => handleDelete(product.id)}>
                           Remover
                         </button>
                       </div>

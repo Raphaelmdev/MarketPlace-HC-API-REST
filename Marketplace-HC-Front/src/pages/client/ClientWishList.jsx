@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { getImageUrl } from "@/utils/imageUrl";
 import { useNavigate } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
 import { getWishlist, removeFromWishlist } from "@/services/wishlistService";
 import { useToast } from "@/context/ToastContext";
 import { formatPrice } from "@/utils/format";
+import { usePolling } from "@/utils/usePolling";
+
 import "@/styles/pages/ClientPages.css";
 
 export function ClientWishlist() {
@@ -16,16 +19,35 @@ export function ClientWishlist() {
   const [removingId, setRemovingId] = useState(null);
 
   async function loadWishlist() {
-    try {
-      setLoading(true);
-      const data = await getWishlist();
-      setWishlist(Array.isArray(data) ? data : []);
-    } catch (err) {
-      showError(err.message || "Erro ao carregar lista de desejos.");
-    } finally {
-      setLoading(false);
-    }
+  try {
+    setLoading(true);
+    const data = await getWishlist();
+
+    console.log("WISHLIST BACKEND:", data); // 👈 ISSO AQUI
+
+    setWishlist(Array.isArray(data) ? data : []);
+  } catch (err) {
+    showError(err.message || "Erro ao carregar lista de desejos.");
+  } finally {
+    setLoading(false);
   }
+}
+
+  const fetchWishlistSilently = useCallback(async () => {
+    const data = await getWishlist();
+    return Array.isArray(data) ? data : [];
+  }, []);
+
+  const updateWishlistSilently = useCallback((data) => {
+    setWishlist(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchWishlistSilently,
+    onUpdate: updateWishlistSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
 
   async function handleRemove(productId) {
     try {
@@ -43,6 +65,7 @@ export function ClientWishlist() {
   const filteredWishlist = wishlist.filter((product) => {
     const term = search.toLowerCase().trim();
     if (!term) return true;
+
     return (
       product.name?.toLowerCase().includes(term) ||
       product.categoryName?.toLowerCase().includes(term)
@@ -93,8 +116,9 @@ export function ClientWishlist() {
             {filteredWishlist.map((product) => (
               <article className="wishlist-card" key={product.id}>
                 <div className="wishlist-image">
+
                   {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} />
+                    <img src={getImageUrl(product.imageUrl)} alt={product.name} />
                   ) : (
                     <FaHeart />
                   )}
@@ -109,6 +133,7 @@ export function ClientWishlist() {
                     <button onClick={() => navigate(`/products/${product.id}`)}>
                       Ver produto
                     </button>
+
                     <button
                       className="danger"
                       disabled={removingId === product.id}

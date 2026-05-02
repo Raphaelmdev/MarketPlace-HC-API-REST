@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   deleteOrder,
   getAllOrders,
@@ -7,11 +7,13 @@ import {
 import { useToast } from "@/context/ToastContext";
 import { FaRegCopy } from "react-icons/fa";
 import { formatPrice } from "@/utils/format";
+import { usePolling } from "@/utils/usePolling";
+
 import "@/styles/pages/AdminPages.css";
 
 const ORDER_STATUSES = [
   { value: "PENDING", label: "Pendente" },
-  { value: "CONFIRMED", label: "Confirmar" },
+  { value: "PAID", label: "Pago" },
   { value: "SHIPPED", label: "Enviar" },
   { value: "DELIVERED", label: "Entregar" },
   { value: "CANCELED", label: "Cancelar" },
@@ -19,7 +21,7 @@ const ORDER_STATUSES = [
 
 const ORDER_STATUS_LABELS = {
   PENDING: "Pendente",
-  CONFIRMED: "Confirmado",
+  PAID: "Pago",
   SHIPPED: "Enviado",
   DELIVERED: "Entregue",
   CANCELED: "Cancelado",
@@ -45,19 +47,16 @@ export function AdminOrders() {
   }
 
   function formatEmail(email) {
-  if (!email) return "";
+    if (!email) return "";
 
-  const parts = email.split("@");
+    const parts = email.split("@");
+    if (parts.length !== 2) return email;
 
-  if (parts.length !== 2) return email;
+    const [name, domain] = parts;
+    const shortName = name.length > 10 ? name.slice(0, 10) + "..." : name;
 
-  const [name, domain] = parts;
-
-  const shortName =
-    name.length > 10 ? name.slice(0, 10) + "..." : name;
-
-  return `${shortName}@${domain}`;
-}
+    return `${shortName}@${domain}`;
+  }
 
   async function loadOrders() {
     try {
@@ -70,6 +69,23 @@ export function AdminOrders() {
       setLoading(false);
     }
   }
+
+  // 🔥 POLLING
+  const fetchOrdersSilently = useCallback(async () => {
+    const data = await getAllOrders(search.trim());
+    return Array.isArray(data) ? data : [];
+  }, [search]);
+
+  const updateOrdersSilently = useCallback((data) => {
+    setOrders(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchOrdersSilently,
+    onUpdate: updateOrdersSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
 
   async function handleChangeStatus(orderId, status) {
     if (!isValidStatus(status)) {
@@ -105,6 +121,7 @@ export function AdminOrders() {
     }
   }
 
+  // 🔥 busca inicial (com debounce leve)
   useEffect(() => {
     const delay = setTimeout(() => {
       loadOrders();
@@ -142,7 +159,7 @@ export function AdminOrders() {
             >
               <option value="ALL">Todos</option>
               <option value="PENDING">Pendentes</option>
-              <option value="CONFIRMED">Confirmados</option>
+              <option value="PAID">Pagos</option>
               <option value="SHIPPED">Enviados</option>
               <option value="DELIVERED">Entregues</option>
               <option value="CANCELED">Cancelados</option>
@@ -195,31 +212,33 @@ export function AdminOrders() {
                     <tr key={order.id}>
                       <td>#{order.id}</td>
 
-                      {/* NOME */}
                       <td>{clientName}</td>
 
-                      {/* EMAIL */}
-                    <td>
-                      {clientEmail ? (
-                        <div className="admin-email-wrapper">
-                          <span className="admin-email" data-email={clientEmail}>
-                            {formatEmail(clientEmail)}
-                          </span>
+                      <td>
+                        {clientEmail ? (
+                          <div className="admin-email-wrapper">
+                            <span
+                              className="admin-email"
+                              data-email={clientEmail}
+                            >
+                              {formatEmail(clientEmail)}
+                            </span>
 
-                          <button
-                            className="copy-btn"
-                            onClick={() => {
-                            navigator.clipboard.writeText(clientEmail);
-                            showSuccess("Email copiado!");
-                          }}  
-                          >
-                            <FaRegCopy />
-                          </button>
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
+                            <button
+                              className="copy-btn"
+                              onClick={() => {
+                                navigator.clipboard.writeText(clientEmail);
+                                showSuccess("Email copiado!");
+                              }}
+                            >
+                              <FaRegCopy />
+                            </button>
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
                       <td>
                         <span
                           className={`admin-status status-${order.status?.toLowerCase()}`}
@@ -233,7 +252,7 @@ export function AdminOrders() {
                       <td>
                         {(order.items || []).length > 0 ? (
                           <div className="admin-order-items">
-                            {(order.items || []).map((item, index) => (
+                            {order.items.map((item, index) => (
                               <span key={index}>
                                 {item.productName ||
                                   `Produto #${item.productId}`}{" "}

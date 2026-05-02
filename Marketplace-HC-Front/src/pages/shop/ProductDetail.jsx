@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 
@@ -7,6 +7,7 @@ import { useToast } from "@/context/ToastContext";
 import { getUser } from "@/utils/auth";
 import { formatPrice } from "@/utils/format";
 import { StoreHeader } from "@/components/StoreHeader";
+import { usePolling } from "@/utils/usePolling";
 
 import {
   getWishlist,
@@ -44,49 +45,94 @@ export function ProductDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    window.scrollTo(0,0);
-    async function loadProduct() {
-      try {
-        setLoading(true);
-        setError("");
+    window.scrollTo(0, 0);
+  }, []);
 
-        const response = await fetch(`${API_URL}/products/${id}`);
-        const data = await response.json().catch(() => null);
+  async function loadProduct() {
+    try {
+      setLoading(true);
+      setError("");
 
-        if (!response.ok)
-          throw new Error(data?.message || "Produto não encontrado.");
+      const response = await fetch(`${API_URL}/products/${id}`);
+      const data = await response.json().catch(() => null);
 
-        setProduct(data);
-      } catch (err) {
-        setError(err.message || "Erro ao carregar produto.");
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(data?.message || "Produto não encontrado.");
       }
-    }
 
-    loadProduct();
-  }, [id]);
+      setProduct(data);
+    } catch (err) {
+      setError(err.message || "Erro ao carregar produto.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadWishlist() {
+    if (!user || isAdmin) return;
+
+    try {
+      const data = await getWishlist();
+
+      const exists = data.some(
+        (item) =>
+          Number(item.product?.id || item.productId || item.id) === Number(id)
+      );
+
+      setIsFavorite(exists);
+    } catch (err) {
+      console.error("Erro ao verificar lista de desejos:", err);
+    }
+  }
 
   useEffect(() => {
-    async function checkFavorite() {
-      if (!user || isAdmin) return;
-
-      try {
-        const data = await getWishlist();
-
-        const exists = data.some(
-          (item) =>
-            Number(item.product?.id || item.productId || item.id) === Number(id)
-        );
-
-        setIsFavorite(exists);
-      } catch (err) {
-        console.error("Erro ao verificar lista de desejos:", err);
-      }
-    }
-
-    checkFavorite();
+    loadProduct();
+    loadWishlist();
   }, [id]);
+
+  const fetchProductSilently = useCallback(async () => {
+    const response = await fetch(`${API_URL}/products/${id}`);
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) return product;
+
+    return data;
+  }, [id, product]);
+
+  const updateProductSilently = useCallback((data) => {
+    setProduct(data);
+  }, []);
+
+  usePolling({
+    fetchData: fetchProductSilently,
+    onUpdate: updateProductSilently,
+    interval: 3000,
+    enabled: !loading,
+  });
+
+  const fetchWishlistSilently = useCallback(async () => {
+    if (!user || isAdmin) return null;
+
+    const data = await getWishlist();
+
+    const exists = data.some(
+      (item) =>
+        Number(item.product?.id || item.productId || item.id) === Number(id)
+    );
+
+    return exists;
+  }, [user, isAdmin, id]);
+
+  const updateWishlistSilently = useCallback((exists) => {
+    if (exists !== null) setIsFavorite(exists);
+  }, []);
+
+  usePolling({
+    fetchData: fetchWishlistSilently,
+    onUpdate: updateWishlistSilently,
+    interval: 3000,
+    enabled: !loading && !!user && !isAdmin,
+  });
 
   function handleDecrement() {
     setQuantity((prev) => Math.max(1, prev - 1));
@@ -153,15 +199,16 @@ export function ProductDetail() {
 
   const unavailable = product?.stock === 0 || product?.active === false;
 
-  if (loading)
+  if (loading) {
     return (
       <div className="detail-page">
         <StoreHeader />
         <p className="detail-message">Carregando produto...</p>
       </div>
     );
+  }
 
-  if (error || !product)
+  if (error || !product) {
     return (
       <div className="detail-page">
         <StoreHeader />
@@ -173,6 +220,7 @@ export function ProductDetail() {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="detail-page">
@@ -263,30 +311,31 @@ export function ProductDetail() {
               </div>
 
               {!isAdmin && !unavailable && (
-                  <div className="detail-quantity">
-                    <span className="detail-quantity-label">Quantidade</span>
+                <div className="detail-quantity">
+                  <span className="detail-quantity-label">Quantidade</span>
 
-                    <div className="detail-quantity-control">
-                      <button
-                        className="detail-qty-btn"
-                        onClick={handleDecrement}
-                        disabled={quantity <= 1}
-                      >
-                        −
-                      </button>
+                  <div className="detail-quantity-control">
+                    <button
+                      className="detail-qty-btn"
+                      onClick={handleDecrement}
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
 
-                      <span className="detail-qty-value">{quantity}</span>
+                    <span className="detail-qty-value">{quantity}</span>
 
-                      <button
-                        className="detail-qty-btn"
-                        onClick={handleIncrement}
-                        disabled={quantity >= product.stock}
-                      >
-                        +
-                      </button>
-                    </div>
+                    <button
+                      className="detail-qty-btn"
+                      onClick={handleIncrement}
+                      disabled={quantity >= product.stock}
+                    >
+                      +
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
+
               <div className="detail-actions">
                 {!isAdmin && (
                   <>
