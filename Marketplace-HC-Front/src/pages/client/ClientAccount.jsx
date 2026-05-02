@@ -55,7 +55,7 @@ export function ClientAccount() {
                   </div>
 
                   <div>
-                    <h3>Seu carrinho</h3>
+                    <h3>Sua sacola</h3>
                     <p>Ver itens e finalizar sua compra.</p>
                   </div>
                 </button>
