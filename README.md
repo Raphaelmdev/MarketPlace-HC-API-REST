@@ -29,8 +29,8 @@ O HazzeCury é um marketplace fullstack com foco em:
 
 | Módulo | Descrição | Link |
 |---|---|---|
-| `hazzecury-frontend` | Interface web em React | [Acessar](#) |
-| `hazzecury-backend` | API REST em Spring Boot | [Acessar](#) |
+| `hazzecury-frontend` | Interface web em React | [Acessar](https://github.com/NicholasPedroF/Marketplace-HC-Front.git) |
+| `hazzecury-backend` | API REST em Spring Boot | [Acessar](https://github.com/Raphaelmdev/MarketPlace-HC-Back.git) |
 
 ---
 
@@ -193,8 +193,14 @@ http://localhost:8080/swagger-ui.html
 
 ## Autores
 
-**Raphael Martins Nascimento**  
-**Nicholas Pedro**  
+**Raphael Martins Nascimento**
+
+**Nicholas Ferreira**
+
+**Miguel Solon**
+
+**Reinaldo Campos**  
+
 Projeto desenvolvido como Trabalho de Conclusão de Curso (TCC) e portfólio pessoal.
 
 ---
